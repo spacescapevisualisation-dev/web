@@ -83,6 +83,79 @@ function ProjectRow({
     return () => el.removeEventListener("wheel", onWheel);
   }, [open]);
 
+  /* touch screens: peek the strip sideways once the unfold settles, so users
+     discover the horizontal scroll; drop the hint after they've used it */
+  useEffect(() => {
+    const el = strip.current;
+    if (!el || !open) return;
+    const item = el.closest(".p-item");
+
+    const knows = () => {
+      try {
+        return !!sessionStorage.getItem("ss-swipe-known");
+      } catch {
+        return false;
+      }
+    };
+    const learn = () => {
+      try {
+        sessionStorage.setItem("ss-swipe-known", "1");
+      } catch {
+        /* fine — they'll just see the hint again next session */
+      }
+    };
+
+    let nudging = false;
+    const onScroll = () => {
+      if (!nudging && el.scrollLeft > 40) {
+        item?.classList.add("was-scrolled");
+        learn();
+      }
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+
+    if (knows()) item?.classList.add("was-scrolled");
+
+    const touch = window.matchMedia("(hover: none)").matches;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let raf = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const stopNudge = () => {
+      nudging = false;
+      cancelAnimationFrame(raf);
+    };
+    if (touch && !reduce && !knows()) {
+      // wait for the .78s unfold, then one sideways breath: 0 → 72px → 0
+      timer = setTimeout(() => {
+        if (el.scrollLeft > 4) return; // already exploring on their own
+        nudging = true;
+        const t0 = performance.now();
+        const tick = (now: number) => {
+          if (!nudging) return;
+          const p = (now - t0) / 1200;
+          if (p >= 1) {
+            el.scrollLeft = 0;
+            nudging = false;
+            return;
+          }
+          el.scrollLeft = Math.sin(p * Math.PI) * 72;
+          raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+      }, 950);
+      el.addEventListener("pointerdown", stopNudge, { passive: true });
+      el.addEventListener("touchstart", stopNudge, { passive: true });
+    }
+
+    return () => {
+      clearTimeout(timer);
+      stopNudge();
+      el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("pointerdown", stopNudge);
+      el.removeEventListener("touchstart", stopNudge);
+    };
+  }, [open]);
+
   const onDown = (e: React.PointerEvent) => {
     const el = strip.current;
     if (!open || e.pointerType !== "mouse" || !el) return;
@@ -174,6 +247,7 @@ function ProjectRow({
           <button className="c-close mono" data-cursor onClick={onToggle}>Close ✕</button>
         </div>
       </div>
+      <span className="swipe-hint mono" aria-hidden>Swipe →</span>
     </article>
   );
 }
@@ -489,6 +563,7 @@ export default function Feed() {
           --ph: clamp(240px, 46vh, 560px);
           --ch: var(--ph);
           --gap: clamp(26px, 5vw, 84px);
+          position: relative;
           margin-bottom: clamp(30px, 6vh, 64px);
         }
         .p-item.open { --ph: clamp(340px, 70vh, 820px); }
@@ -556,6 +631,24 @@ export default function Feed() {
         .c-dl dt { font-size: 8px; color: var(--mut); }
         .c-dl dd { font-family: var(--font-mono); font-size: 10px; color: var(--ink); text-align: right; }
         .c-body { font-size: clamp(13px, 1.2vw, 16px); line-height: 1.65; color: var(--ink); }
+
+        /* touch-only nudge chip: appears after the unfold, leaves once they swipe */
+        .swipe-hint {
+          position: absolute; right: 4vw; top: calc(var(--ch) - 44px); z-index: 4;
+          background: #000; color: #fff; padding: 9px 13px; font-size: 8.5px;
+          opacity: 0; transform: translateX(10px); pointer-events: none;
+          transition: opacity .5s ease, transform .6s cubic-bezier(.16,1,.3,1);
+        }
+        .p-item.open .swipe-hint { opacity: 1; transform: none; transition-delay: .95s; }
+        .p-item.open:not(.was-scrolled) .swipe-hint { animation: hint-nudge 1.7s ease-in-out 2.2s infinite; }
+        .p-item.was-scrolled .swipe-hint,
+        .p-item:not(.open) .swipe-hint { opacity: 0; transition-delay: 0s; animation: none; }
+        @keyframes hint-nudge {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(-7px); }
+        }
+        @media (hover: hover) and (pointer: fine) { .swipe-hint { display: none; } }
+        @media (prefers-reduced-motion: reduce) { .swipe-hint { animation: none !important; } }
 
         .c-end { display: flex; align-items: center; justify-content: center; }
         .c-close { background: none; border: 1px solid var(--line); padding: 12px 10px; font-size: 9px; color: var(--ink); white-space: nowrap; writing-mode: vertical-rl; }
