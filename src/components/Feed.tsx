@@ -570,16 +570,17 @@ export default function Feed() {
 
         .p-item {
           /* closed / open cell heights — the whole unfold is this one variable */
-          --ph: clamp(240px, 46vh, 560px);
+          --ph: clamp(220px, 40vh, 470px);
           --ch: var(--ph);
           --gap: clamp(26px, 5vw, 84px);
           position: relative;
           margin-bottom: clamp(30px, 6vh, 64px);
         }
         .p-item.open { --ph: clamp(340px, 70vh, 820px); }
-        .ar-std  { --ar: 1.5; }
-        .ar-wide { --ar: 1.7778; }
-        .ar-tall { --ar: 0.8; }
+        /* covers come in two shapes only: square, or a small 4:3 rectangle */
+        .ar-std  { --ar: 1; }
+        .ar-wide { --ar: 1.3333; }
+        .ar-tall { --ar: 1; }
         .p-item { --cover-w: calc(var(--ch) * var(--ar)); }
 
         .p-strip {
