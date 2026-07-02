@@ -84,17 +84,22 @@ function ProjectRow({
   }, [open]);
 
   const onDown = (e: React.PointerEvent) => {
-    if (!open || e.pointerType !== "mouse") return;
-    const el = strip.current!;
+    const el = strip.current;
+    if (!open || e.pointerType !== "mouse" || !el) return;
     drag.current = { active: true, moved: false, startX: e.clientX, startLeft: el.scrollLeft };
-    el.setPointerCapture(e.pointerId);
+    try {
+      el.setPointerCapture(e.pointerId);
+    } catch {
+      /* pointer already released — drag still works, just uncaptured */
+    }
     el.classList.add("grabbing");
   };
   const onMove = (e: React.PointerEvent) => {
-    if (!drag.current.active) return;
+    const el = strip.current;
+    if (!drag.current.active || !el) return;
     const dx = e.clientX - drag.current.startX;
     if (Math.abs(dx) > 6) drag.current.moved = true;
-    strip.current!.scrollLeft = drag.current.startLeft - dx;
+    el.scrollLeft = drag.current.startLeft - dx;
   };
   const onUp = () => {
     drag.current.active = false;
@@ -111,6 +116,7 @@ function ProjectRow({
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerLeave={onUp}
+        onPointerCancel={onUp}
       >
         {/* lead: cover + caption, the only thing visible when closed */}
         <div className="p-lead">
@@ -179,6 +185,16 @@ export default function Feed() {
   const [cat, setCat] = useState("All");
   const [index, setIndex] = useState(false); // the tab's "everything" panel
   const [fopen, setFopen] = useState(false); // mobile filter panel (right slide-in)
+  const fpanelRef = useRef<HTMLElement>(null);
+  const fbtnRef = useRef<HTMLButtonElement>(null);
+
+  // filter panel open: move focus in; on close, hand it back to the funnel
+  useEffect(() => {
+    if (!fopen) return;
+    const btn = fbtnRef.current;
+    fpanelRef.current?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+    return () => btn?.focus({ preventScroll: true });
+  }, [fopen]);
 
   const shown = PROJECTS.filter((p) => cat === "All" || p.typology === cat);
   const listed = cat === "All" ? PROJECTS : shown;
@@ -235,6 +251,7 @@ export default function Feed() {
       if (e.key !== "Escape") return;
       setOpenNo(null);
       setFopen(false);
+      setIndex(false);
     };
     window.addEventListener("keydown", onKey);
     return () => { clearTimeout(t); window.removeEventListener("keydown", onKey); };
@@ -264,13 +281,16 @@ export default function Feed() {
 
   return (
     <section id="work" ref={root} className="feed">
+      <h1 className="sr-only">Space Scape — Architectural Visualisation Projects</h1>
+
       {/* ---- category tabs: a tab opens everything ---- */}
-      <div className="catbar">
+      <div className="catbar" role="navigation" aria-label="Project categories">
         {CATS.map((c) => (
           <button
             key={c}
             className={`cat mono ${c === cat ? "on" : ""}`}
             data-cursor
+            aria-current={c === cat || undefined}
             aria-expanded={c === cat && index}
             onClick={() => onTab(c)}
           >
@@ -303,6 +323,7 @@ export default function Feed() {
 
       {/* ---- mobile chrome: funnel icon top-right → categories slide in from the right ---- */}
       <button
+        ref={fbtnRef}
         className="fbtn"
         data-cursor
         aria-expanded={fopen}
@@ -312,7 +333,7 @@ export default function Feed() {
         {fopen ? <span className="fx">✕</span> : <><i /><i /><i /><i /></>}
       </button>
 
-      <aside className={`fpanel ${fopen ? "open" : ""}`} aria-hidden={!fopen}>
+      <aside ref={fpanelRef} className={`fpanel ${fopen ? "open" : ""}`} aria-hidden={!fopen} aria-label="Filter projects">
         <span className="fp-kick mono">Categories</span>
         {CATS.map((c) => (
           <button
@@ -460,7 +481,7 @@ export default function Feed() {
         .ci-veil { position: fixed; inset: 0; z-index: 6300; background: transparent; border: none; }
 
         /* ---------- the feed ---------- */
-        .projects-container { overflow-x: hidden; }
+        .projects-container { overflow-x: hidden; content-visibility: auto; }
         .projects-scaler { will-change: transform; }
 
         .p-item {

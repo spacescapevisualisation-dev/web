@@ -52,7 +52,13 @@ export default function Contact() {
           <span className="mono">Email</span>
           <b>studio@spacescape.com</b>
         </a>
-        <a className="ct-item" data-cursor href="#" onClick={(e) => e.preventDefault()}>
+        <a
+          className="ct-item"
+          data-cursor
+          href="https://instagram.com/spacescape.viz"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <span className="mono">Instagram</span>
           <b>@spacescape.viz</b>
         </a>

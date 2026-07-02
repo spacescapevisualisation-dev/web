@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,10 +16,38 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const SITE_URL = "https://jatinli.github.io/space-scape";
+const DESCRIPTION =
+  "Space Scape designs the experience of architecture. Photoreal imagery and cinematic visualisation for architecture, interiors and development.";
+
 export const metadata: Metadata = {
-  title: "Space Scape — Architectural Visualisation",
-  description:
-    "Space Scape designs the experience of architecture. Photoreal imagery and cinematic visualisation for architecture, interiors and development.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "Space Scape — Architectural Visualisation",
+    template: "%s — Space Scape",
+  },
+  description: DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    siteName: "Space Scape",
+    title: "Space Scape — Architectural Visualisation",
+    description: DESCRIPTION,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary",
+    title: "Space Scape — Architectural Visualisation",
+    description: DESCRIPTION,
+  },
+  robots: { index: true, follow: true },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

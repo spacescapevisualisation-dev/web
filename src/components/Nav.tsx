@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function scrollTo(id: string) {
   const el = document.getElementById(id);
@@ -16,17 +16,24 @@ function scrollTo(id: string) {
  */
 export default function Nav() {
   const [open, setOpen] = useState(false);
+  const panel = useRef<HTMLElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
 
-  // menu open: freeze the smooth scroll, close on Escape
+  // menu open: freeze the smooth scroll, move focus in, close on Escape;
+  // on close, hand focus back to the toggle
   useEffect(() => {
     if (!open) return;
     const lenis = (window as unknown as { __lenis?: { stop?: () => void; start?: () => void } }).__lenis;
     lenis?.stop?.();
+    const toggleEl = toggle.current;
+    const first = panel.current?.querySelector<HTMLElement>("button, a");
+    first?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     window.addEventListener("keydown", onKey);
     return () => {
       lenis?.start?.();
       window.removeEventListener("keydown", onKey);
+      toggleEl?.focus({ preventScroll: true });
     };
   }, [open]);
 
@@ -38,6 +45,7 @@ export default function Nav() {
   return (
     <>
       <button
+        ref={toggle}
         className={`logo display ${open ? "open" : ""}`}
         data-cursor
         data-cursor-label={open ? "Close" : "Menu"}
@@ -48,7 +56,7 @@ export default function Nav() {
         SS<i>/</i>
       </button>
 
-      <nav className={`side ${open ? "open" : ""}`} aria-hidden={!open}>
+      <nav ref={panel} className={`side ${open ? "open" : ""}`} aria-hidden={!open} aria-label="Site menu">
         <span className="side-mark display">SPACE SCAPE</span>
         {links.map(([label, id], i) => (
           <button

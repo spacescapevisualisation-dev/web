@@ -12,18 +12,26 @@ export default function Loader() {
   const [gone, setGone] = useState(false);
 
   useEffect(() => {
-    // play the intro once per browser session; skip it on refresh / return
-    if (sessionStorage.getItem("ss-intro-seen")) {
-      setGone(true);
-      return;
+    // play the intro once per browser session; skip it on refresh / return.
+    // storage can throw (private browsing, blocked cookies) — degrade to
+    // playing the intro rather than crashing
+    let seen = false;
+    try {
+      seen = !!sessionStorage.getItem("ss-intro-seen");
+      if (!seen) sessionStorage.setItem("ss-intro-seen", "1");
+    } catch {
+      /* storage unavailable — just play the intro */
     }
-    sessionStorage.setItem("ss-intro-seen", "1");
+    if (seen) {
+      const raf = requestAnimationFrame(() => setGone(true));
+      return () => cancelAnimationFrame(raf);
+    }
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const ctx = gsap.context(() => {
       if (reduce) {
         gsap.set(root.current, { autoAlpha: 0 });
-        setGone(true);
+        requestAnimationFrame(() => setGone(true));
         return;
       }
       const tl = gsap.timeline({
@@ -44,6 +52,10 @@ export default function Loader() {
 
   return (
     <div ref={root} className="ld">
+      {/* without JS the curtain would never lift — hide it */}
+      <noscript>
+        <style>{`.ld { display: none; }`}</style>
+      </noscript>
       <div className="ld-inner">
         <h1 className="ld-mark display" aria-label="Space Scape">
           <span>S</span><span>P</span><span>A</span><span>C</span><span>E</span>
