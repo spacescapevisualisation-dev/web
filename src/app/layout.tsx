@@ -27,7 +27,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${display.variable} ${mono.variable}`}>
-      <body className="fx-grain">{children}</body>
+      <body className="fx-grain">
+        <a href="#work" className="skip-link">Skip to content</a>
+        {children}
+      </body>
     </html>
   );
 }

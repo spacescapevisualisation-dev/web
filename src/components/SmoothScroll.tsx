@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -9,49 +9,28 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+/**
+ * big.dk-style momentum scroll: Lenis drives the page with a long, liquid
+ * glide. The velocity-reactive zoom lives in Feed (on .projects-scaler),
+ * mirroring how big.dk scales only its projects grid — not the whole page.
+ */
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
-  const wrap = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return;
 
     const lenis = new Lenis({
-      duration: 1.0,
+      duration: 1.15,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      lerp: 0.1,
-      wheelMultiplier: 1.12,
+      lerp: 0.09,
+      wheelMultiplier: 1.05,
       smoothWheel: true,
       touchMultiplier: 1.8,
     });
 
     lenis.on("scroll", ScrollTrigger.update);
 
-    // velocity-driven minimize while scrolling, settles back when idle
-    let scale = 1;
-    const raf = (time: number) => {
-      lenis.raf(time * 1000);
-      const el = wrap.current;
-      if (el) {
-        const v = Math.abs((lenis as unknown as { velocity: number }).velocity || 0);
-        const target = 1 - Math.min(v * 0.0095, 0.14);
-        scale += (target - scale) * 0.11;
-        if (Math.abs(scale - 1) < 0.0008) {
-          scale = 1;
-          if (el.style.transform) {
-            el.style.transform = "";
-            el.style.transformOrigin = "";
-            el.style.borderRadius = "";
-          }
-        } else {
-          const originY = window.scrollY + window.innerHeight / 2;
-          el.style.transformOrigin = `50% ${originY}px`;
-          el.style.transform = `scale(${scale})`;
-          el.style.borderRadius = `${(1 - scale) * 320}px`;
-        }
-      }
-    };
-
+    const raf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
 
@@ -60,14 +39,9 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     return () => {
       gsap.ticker.remove(raf);
       lenis.destroy();
-      if (wrap.current) wrap.current.style.transform = "";
       (window as unknown as { __lenis?: Lenis }).__lenis = undefined;
     };
   }, []);
 
-  return (
-    <div ref={wrap} className="scale-wrap" style={{ willChange: "transform", overflow: "hidden" }}>
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }

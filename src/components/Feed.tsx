@@ -1,11 +1,36 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { PROJECTS, type Project } from "@/lib/projects";
 
 gsap.registerPlugin(ScrollTrigger);
+
+type LenisLike = {
+  velocity?: number;
+  scrollTo: (t: HTMLElement | number, o?: object) => void;
+};
+const getLenis = () => (window as unknown as { __lenis?: LenisLike }).__lenis;
+
+const CATS = ["All", ...Array.from(new Set(PROJECTS.map((p) => p.typology)))];
+
+/* tiny original pictogram per project — the black tile beside each caption */
+function Pictogram({ k }: { k: string }) {
+  const glyph: Record<string, React.ReactNode> = {
+    s1: <rect x="13" y="4" width="6" height="24" fill="#fff" />, // tower
+    s2: <rect x="5" y="20" width="22" height="3" fill="#fff" />, // pavilion slab
+    s3: <path d="M4 20h20v3H10v5H4z" fill="#fff" />, // cantilever
+    s4: <path d="M6 26v-8a10 10 0 0 1 20 0v8h-4v-8a6 6 0 0 0-12 0v8z" fill="#fff" />, // vault
+    s5: <path d="M6 26h20v-3H10v-4h12v-3H14v-4h8v-3H6z" fill="#fff" />, // terraces
+    s6: <circle cx="16" cy="18" r="8" fill="none" stroke="#fff" strokeWidth="3" />, // dome
+  };
+  return (
+    <span className="p-ico" aria-hidden>
+      <svg viewBox="0 0 32 32">{glyph[k] ?? glyph.s1}</svg>
+    </span>
+  );
+}
 
 function SitePlan({ label }: { label: string }) {
   return (
@@ -20,231 +45,415 @@ function SitePlan({ label }: { label: string }) {
   );
 }
 
-/* the right-hand panels: horizontal, drag on desktop / swipe on phone */
-function RightStrip({ p }: { p: Project }) {
+/**
+ * One project row, big.dk style: closed it is just the centred cover;
+ * clicking unfolds the row in place — height eases open over .78s and the
+ * strip becomes a horizontal drag/wheel scroller through everything.
+ */
+function ProjectRow({
+  p,
+  open,
+  onToggle,
+}: {
+  p: Project;
+  open: boolean;
+  onToggle: () => void;
+}) {
   const strip = useRef<HTMLDivElement>(null);
-  const drag = useRef({ active: false, startX: 0, startLeft: 0 });
+  const drag = useRef({ active: false, moved: false, startX: 0, startLeft: 0 });
+
+  /* vertical wheel drives the open strip horizontally (until it runs out) */
+  useEffect(() => {
+    const el = strip.current;
+    if (!el) return;
+    if (!open) {
+      el.scrollTo({ left: 0, behavior: "smooth" });
+      return;
+    }
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      const max = el.scrollWidth - el.clientWidth;
+      const next = el.scrollLeft + e.deltaY;
+      if ((e.deltaY > 0 && el.scrollLeft < max - 1) || (e.deltaY < 0 && el.scrollLeft > 1)) {
+        el.scrollLeft = Math.max(0, Math.min(max, next));
+        e.preventDefault();
+      }
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [open]);
 
   const onDown = (e: React.PointerEvent) => {
-    if (e.pointerType !== "mouse") return;
+    if (!open || e.pointerType !== "mouse") return;
     const el = strip.current!;
-    drag.current = { active: true, startX: e.clientX, startLeft: el.scrollLeft };
+    drag.current = { active: true, moved: false, startX: e.clientX, startLeft: el.scrollLeft };
     el.setPointerCapture(e.pointerId);
     el.classList.add("grabbing");
   };
   const onMove = (e: React.PointerEvent) => {
     if (!drag.current.active) return;
-    strip.current!.scrollLeft = drag.current.startLeft - (e.clientX - drag.current.startX);
+    const dx = e.clientX - drag.current.startX;
+    if (Math.abs(dx) > 6) drag.current.moved = true;
+    strip.current!.scrollLeft = drag.current.startLeft - dx;
   };
-  const onUp = () => { drag.current.active = false; strip.current?.classList.remove("grabbing"); };
+  const onUp = () => {
+    drag.current.active = false;
+    strip.current?.classList.remove("grabbing");
+  };
 
   return (
-    <div className="dstrip" ref={strip} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onUp}>
-      <div className="dpanel dp-img"><div className={`scene ${p.sceneB}`} /></div>
-      <div className="dpanel dp-text">
-        <span className="mono d-kick">Description</span>
-        <p className="d-body">{p.desc2}</p>
+    <article id={`proj-${p.no}`} className={`p-item ar-${p.span} ${open ? "open" : ""}`}>
+      <div
+        className="p-strip"
+        ref={strip}
+        {...(open ? { "data-lenis-prevent": "" } : {})}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerLeave={onUp}
+      >
+        {/* lead: cover + caption, the only thing visible when closed */}
+        <div className="p-lead">
+          <button
+            className="p-cover"
+            data-cursor
+            data-cursor-label={open ? "Close" : "Open"}
+            aria-expanded={open}
+            aria-label={`${open ? "Collapse" : "Expand"} ${p.name} by ${p.architect}`}
+            onClick={() => {
+              if (drag.current.moved) return; // it was a drag, not a click
+              onToggle();
+            }}
+          >
+            <div className={`scene ${p.scene}`} />
+            <span className="p-no mono">{p.no}</span>
+          </button>
+          <div className="p-cap">
+            <Pictogram k={p.scene} />
+            <div className="p-cap-txt">
+              <h3 className="p-name">{p.name}</h3>
+              <p className="p-loc">{p.location}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* everything else, revealed by the unfold */}
+        <div className="p-cell c-info">
+          <div className="cell-in">
+            <span className="mono c-kick">{p.category}</span>
+            <p className="c-lede">{p.desc}</p>
+            <dl className="c-dl">
+              <div><dt className="mono">Architecture</dt><dd>{p.architect}</dd></div>
+              <div><dt className="mono">Visualisation</dt><dd>Space Scape</dd></div>
+              <div><dt className="mono">Year</dt><dd>{p.year}</dd></div>
+              <div><dt className="mono">Typology</dt><dd>{p.typology}</dd></div>
+              <div><dt className="mono">Scale</dt><dd>{p.size}</dd></div>
+              <div><dt className="mono">Status</dt><dd>{p.status}</dd></div>
+            </dl>
+          </div>
+        </div>
+
+        <div className="p-cell c-photo"><div className={`scene ${p.sceneB}`} /></div>
+
+        <div className="p-cell c-text">
+          <div className="cell-in">
+            <span className="mono c-kick">Description</span>
+            <p className="c-body">{p.desc2}</p>
+          </div>
+        </div>
+
+        <div className="p-cell c-plan"><SitePlan label={p.location} /></div>
+
+        <div className="p-cell c-end">
+          <button className="c-close mono" data-cursor onClick={onToggle}>Close ✕</button>
+        </div>
       </div>
-      <div className="dpanel dp-plan"><SitePlan label={p.location} /></div>
-    </div>
+    </article>
   );
 }
 
 export default function Feed() {
   const root = useRef<HTMLDivElement>(null);
+  const scaler = useRef<HTMLDivElement>(null);
   const [openNo, setOpenNo] = useState<string | null>(null);
+  const [cat, setCat] = useState("All");
+  const [index, setIndex] = useState(false); // the tab's "everything" panel
 
+  const shown = PROJECTS.filter((p) => cat === "All" || p.typology === cat);
+  const listed = cat === "All" ? PROJECTS : shown;
+
+  /* ------- big.dk motion scroll: the grid breathes out with velocity ------- */
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let scale = 1;
+    const tick = () => {
+      const el = scaler.current;
+      if (!el) return;
+      const v = Math.abs(getLenis()?.velocity ?? 0);
+      const target = 1 - Math.min(v * 0.008, 0.09);
+      scale += (target - scale) * 0.1;
+      if (Math.abs(scale - 1) < 0.0006) {
+        scale = 1;
+        if (el.style.transform) {
+          el.style.transform = "";
+          el.style.transformOrigin = "";
+        }
+      } else {
+        const originY = window.scrollY + window.innerHeight / 2 - el.offsetTop;
+        el.style.transformOrigin = `50% ${originY}px`;
+        el.style.transform = `scale(${scale})`;
+      }
+    };
+    gsap.ticker.add(tick);
+    return () => gsap.ticker.remove(tick);
+  }, []);
+
+  /* gentle entrance per tile */
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
     const ctx = gsap.context(() => {
-      gsap.utils.toArray<HTMLElement>(".feed-item").forEach((item) => {
-        const img = item.querySelector(".scene") as HTMLElement;
-        if (reduce) return;
+      gsap.utils.toArray<HTMLElement>(".p-item").forEach((item) => {
         gsap.fromTo(
           item,
-          { clipPath: "inset(6% 4% 6% 4%)", opacity: 0.4 },
+          { opacity: 0.25, y: 40 },
           {
-            clipPath: "inset(0% 0% 0% 0%)", opacity: 1,
-            ease: "power3.out", duration: 1.1,
-            scrollTrigger: { trigger: item, start: "top 92%" },
+            opacity: 1, y: 0, duration: 1.0, ease: "power3.out",
+            scrollTrigger: { trigger: item, start: "top 94%" },
           }
-        );
-        gsap.fromTo(
-          img,
-          { yPercent: -7 },
-          { yPercent: 7, ease: "none", scrollTrigger: { trigger: item, start: "top bottom", end: "bottom top", scrub: 1 } }
         );
       });
     }, root);
     return () => ctx.revert();
+  }, [cat]);
+
+  /* keep scroll maths honest after unfolds, and close on Escape */
+  useEffect(() => {
+    const t = setTimeout(() => ScrollTrigger.refresh(), 850);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenNo(null);
+    window.addEventListener("keydown", onKey);
+    return () => { clearTimeout(t); window.removeEventListener("keydown", onKey); };
+  }, [openNo, cat]);
+
+  const jumpTo = useCallback((p: Project) => {
+    setIndex(false);
+    setOpenNo(p.no);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`proj-${p.no}`);
+      if (!el) return;
+      const lenis = getLenis();
+      if (lenis) lenis.scrollTo(el, { offset: -Math.round(window.innerHeight * 0.1), duration: 1.2 });
+      else el.scrollIntoView({ behavior: "smooth" });
+    });
   }, []);
 
-  useEffect(() => {
-    const t = setTimeout(() => ScrollTrigger.refresh(), 1100);
-    return () => clearTimeout(t);
-  }, [openNo]);
+  const onTab = (c: string) => {
+    if (c === cat) {
+      setIndex((v) => !v); // same tab again: toggle the full index
+    } else {
+      setCat(c);
+      setIndex(true);
+      setOpenNo(null);
+    }
+  };
 
   return (
     <section id="work" ref={root} className="feed">
-      {PROJECTS.map((p) => {
-        const isOpen = openNo === p.no;
-        return (
-          <article key={p.no} className={`feed-block ${isOpen ? "open" : ""}`}>
-            {/* LEFT — info / specs, beside the photo */}
-            <div className="detail-left">
-              <div className="dpanel dp-info">
-                <span className="mono d-cat">{p.category}</span>
-                <p className="d-lede">{p.desc}</p>
-                <dl className="d-dl">
-                  <div><dt className="mono">Architecture</dt><dd>{p.architect}</dd></div>
-                  <div><dt className="mono">Visualisation</dt><dd>Space Scape</dd></div>
-                  <div><dt className="mono">Year</dt><dd>{p.year}</dd></div>
-                  <div><dt className="mono">Typology</dt><dd>{p.typology}</dd></div>
-                  <div><dt className="mono">Scale</dt><dd>{p.size}</dd></div>
-                  <div><dt className="mono">Status</dt><dd>{p.status}</dd></div>
-                </dl>
-              </div>
-            </div>
+      {/* ---- category tabs: a tab opens everything ---- */}
+      <div className="catbar">
+        {CATS.map((c) => (
+          <button
+            key={c}
+            className={`cat mono ${c === cat ? "on" : ""}`}
+            data-cursor
+            aria-expanded={c === cat && index}
+            onClick={() => onTab(c)}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
 
-            {/* CENTRE — the photo */}
+      <div className={`cat-index ${index ? "open" : ""}`} aria-hidden={!index}>
+        <div className="ci-in">
+          {listed.map((p, i) => (
             <button
-              className={`feed-item f-${p.span}`}
+              key={p.no}
+              className="ci-item"
               data-cursor
-              data-cursor-label={isOpen ? "Close" : "Open"}
-              onClick={() => setOpenNo(isOpen ? null : p.no)}
-              aria-expanded={isOpen}
-              aria-label={`${isOpen ? "Collapse" : "Expand"} ${p.name} by ${p.architect}`}
+              style={{ transitionDelay: index ? `${0.05 * i + 0.08}s` : "0s" }}
+              tabIndex={index ? 0 : -1}
+              onClick={() => {
+                if (cat !== "All" && p.typology !== cat) setCat("All");
+                jumpTo(p);
+              }}
             >
-              <div className={`scene ${p.scene}`} />
-              <span className="feed-no mono">{p.no}</span>
-              <div className="feed-cap">
-                <div className="feed-cap-row">
-                  <span className="feed-name display">{p.name}</span>
-                  <span className="feed-loc mono">{p.location}</span>
-                </div>
-                <span className="feed-arch mono">Architecture · {p.architect}</span>
-              </div>
+              <span className="ci-name display">{p.name}</span>
+              <span className="ci-meta mono">{p.location} · {p.year}</span>
             </button>
+          ))}
+        </div>
+      </div>
+      {index && <button className="ci-veil" aria-label="Close index" onClick={() => setIndex(false)} />}
 
-            {/* RIGHT — gallery, description, site plan */}
-            <div className="detail-right">
-              <RightStrip p={p} />
-              <span className="d-hint mono" aria-hidden>Drag / swipe →</span>
-            </div>
-          </article>
-        );
-      })}
+      {/* ---- the feed, clipped like big.dk's projects-container ---- */}
+      <div className="projects-container">
+        <div className="projects-scaler" ref={scaler}>
+          {shown.map((p) => (
+            <ProjectRow
+              key={p.no}
+              p={p}
+              open={openNo === p.no}
+              onToggle={() => {
+                const opening = openNo !== p.no;
+                setOpenNo(opening ? p.no : null);
+                if (opening) {
+                  const el = document.getElementById(`proj-${p.no}`);
+                  const lenis = getLenis();
+                  if (el && lenis) {
+                    requestAnimationFrame(() =>
+                      lenis.scrollTo(el, { offset: -Math.round(window.innerHeight * 0.08), duration: 1.1 })
+                    );
+                  }
+                }
+              }}
+            />
+          ))}
+        </div>
+      </div>
 
       <style>{`
-        .feed {
-          --gap: clamp(14px, 1.5vw, 26px);
-          max-width: min(92vw, 560px); margin: 0 auto;
-          padding: clamp(96px, 14vh, 150px) clamp(14px, 3vw, 28px) clamp(40px, 8vh, 90px);
-          display: flex; flex-direction: column; gap: clamp(40px, 9vh, 120px);
+        .feed { padding-top: clamp(88px, 12vh, 128px); }
+
+        /* ---------- category tabs ---------- */
+        .catbar {
+          position: fixed; top: 0; left: 0; right: 0; z-index: 6500;
+          display: flex; justify-content: center; align-items: center;
+          gap: clamp(4px, 1vw, 10px);
+          padding: 15px clamp(12px, 3vw, 24px);
+          background: rgba(255,255,255,0.94); backdrop-filter: blur(6px);
+          overflow-x: auto; scrollbar-width: none;
         }
-        .feed-block { position: relative; display: flex; flex-direction: column; }
-        .feed-item {
-          position: relative; width: 100%; overflow: hidden; background: #0b0a09;
-          display: block; padding: 0; border: none; will-change: clip-path, opacity;
-          transition: box-shadow .6s ease, transform .6s cubic-bezier(.16,1,.3,1);
+        .catbar::-webkit-scrollbar { display: none; }
+        .cat {
+          flex: none; background: none; border: none; padding: 6px 12px;
+          font-size: 10px; color: var(--mut); transition: color .3s;
         }
-        .feed-block.open .feed-item { box-shadow: 0 26px 70px -28px rgba(0,0,0,.5); transform: translateY(-4px); }
-        .f-std { aspect-ratio: 3 / 2; }
-        .f-wide { aspect-ratio: 16 / 9; }
-        .f-tall { aspect-ratio: 4 / 5; }
-        .feed-item .scene { width: 100%; height: 114%; top: -7%; transition: transform 1.2s cubic-bezier(.16,1,.3,1); }
-        .feed-no { position: absolute; top: 16px; left: 18px; z-index: 4; font-size: 9px; color: rgba(255,255,255,0.7); }
-        .feed-cap {
-          position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: clamp(16px, 1.6vw, 26px);
-          display: flex; flex-direction: column; gap: 8px;
-          background: linear-gradient(to top, rgba(8,8,9,0.8), rgba(8,8,9,0) 100%);
-          opacity: 0; transform: translateY(12px);
-          transition: opacity .4s ease, transform .5s cubic-bezier(.16,1,.3,1);
+        .cat:hover { color: var(--ink); }
+        .cat.on { color: var(--ink); text-decoration: underline; text-underline-offset: 5px; }
+        @media (max-width: 860px) { .catbar { justify-content: flex-start; padding-left: 92px; } }
+
+        /* the tab's full index — everything, listed */
+        .cat-index {
+          position: fixed; top: 0; left: 0; right: 0; z-index: 6400;
+          background: rgba(255,255,255,0.98); backdrop-filter: blur(10px);
+          padding: 78px clamp(18px, 5vw, 72px) 34px;
+          max-height: 80vh; overflow-y: auto;
+          clip-path: inset(0 0 100% 0);
+          transition: clip-path .7s cubic-bezier(.45,0,.55,1);
+          border-bottom: 1px solid var(--line-soft);
         }
-        .feed-cap-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-        .feed-name { font-size: clamp(20px, 2.2vw, 34px); color: #fff; }
-        .feed-loc { font-size: 9px; color: rgba(255,255,255,0.65); white-space: nowrap; }
-        .feed-arch { font-size: 9px; color: var(--bronze); letter-spacing: 0.16em; }
-        @media (hover: hover) {
-          .feed-item:hover .scene { transform: scale(1.05); }
-          .feed-item:hover .feed-cap, .feed-block.open .feed-cap { opacity: 1; transform: none; }
+        .cat-index.open { clip-path: inset(0 0 0 0); }
+        .ci-in { display: flex; flex-direction: column; }
+        .ci-item {
+          display: flex; align-items: baseline; justify-content: space-between; gap: 18px;
+          background: none; border: none; text-align: left; padding: 10px 0;
+          border-top: 1px solid var(--line-soft);
+          opacity: 0; transform: translateY(14px);
+          transition: opacity .5s ease, transform .6s cubic-bezier(.16,1,.3,1);
         }
-        @media (hover: none) { .feed-cap { opacity: 1; transform: none; } }
+        .cat-index.open .ci-item { opacity: 1; transform: none; }
+        .ci-name { font-size: clamp(22px, 4vw, 44px); color: var(--ink); transition: opacity .3s; }
+        .ci-item:hover .ci-name { opacity: .45; }
+        .ci-meta { font-size: 9px; color: var(--mut); white-space: nowrap; }
+        .ci-veil { position: fixed; inset: 0; z-index: 6300; background: transparent; border: none; }
 
-        /* ---- info unfolds to the LEFT of the photo, gallery to the RIGHT (both at photo level) ---- */
-        .detail-left, .detail-right {
-          position: absolute; top: 0; bottom: 0;
-          width: calc(50vw - min(46vw, 280px) - var(--gap));
-          pointer-events: none;
+        /* ---------- the feed ---------- */
+        .projects-container { overflow-x: hidden; }
+        .projects-scaler { will-change: transform; }
+
+        .p-item {
+          /* closed / open panel heights — the whole unfold is this one variable */
+          --ph: clamp(240px, 46vh, 560px);
+          --gap: clamp(26px, 5vw, 84px);
+          margin-bottom: clamp(30px, 6vh, 64px);
         }
-        .detail-left { right: calc(100% + var(--gap)); display: flex; justify-content: flex-end; }
-        .detail-right { left: calc(100% + var(--gap)); }
-        .feed-block.open .detail-left, .feed-block.open .detail-right { pointer-events: auto; }
+        .p-item.open { --ph: clamp(340px, 70vh, 820px); }
+        .ar-std  { --ar: 1.5; }
+        .ar-wide { --ar: 1.7778; }
+        .ar-tall { --ar: 0.8; }
+        .p-item { --cover-w: calc(var(--ph) * var(--ar)); }
 
-        .dstrip {
-          height: 100%; display: flex; gap: clamp(10px, 1.1vw, 16px);
-          overflow-x: auto; overflow-y: hidden; scroll-snap-type: x proximity;
-          scrollbar-width: none; cursor: grab; touch-action: pan-x; padding-right: 3vw;
+        .p-strip {
+          display: flex; align-items: flex-start;
+          overflow-x: hidden; overflow-y: hidden;
+          padding-left: max(5vw, calc(50% - var(--cover-w) / 2));
+          padding-right: 6vw;
+          scrollbar-width: none;
+          transition: padding-left .78s cubic-bezier(.45,0,.55,1);
         }
-        .dstrip::-webkit-scrollbar { display: none; }
-        .dstrip.grabbing { cursor: grabbing; }
+        .p-strip::-webkit-scrollbar { display: none; }
+        .p-item.open .p-strip { overflow-x: auto; cursor: grab; touch-action: pan-x pan-y; }
+        .p-item.open .p-strip.grabbing { cursor: grabbing; }
 
-        /* napkin unfold — graceful hinge */
-        .dpanel {
-          flex: none; height: 100%; scroll-snap-align: start; overflow: hidden; position: relative;
-          opacity: 0;
-          transition: clip-path 1.2s cubic-bezier(.16,1,.3,1), opacity .85s ease,
-                      transform 1.15s cubic-bezier(.16,1,.3,1);
+        .p-lead { flex: none; display: flex; flex-direction: column; }
+        .p-cover {
+          position: relative; display: block; border: none; padding: 0; background: #0b0a09;
+          width: var(--cover-w); height: var(--ph); overflow: hidden;
+          transition: width .78s cubic-bezier(.45,0,.55,1), height .78s cubic-bezier(.45,0,.55,1);
+          will-change: width, height;
         }
-        /* right panels hinge from their left edge */
-        .dp-img, .dp-text, .dp-plan { clip-path: inset(0 100% 0 0); transform: perspective(1100px) rotateY(-15deg); transform-origin: left center; }
-        /* left info hinges from its right edge (toward the photo, opening left) */
-        .dp-info { clip-path: inset(0 0 0 100%); transform: perspective(1100px) rotateY(15deg); transform-origin: right center; }
-        .feed-block.open .dpanel { clip-path: inset(0 0 0 0); opacity: 1; transform: perspective(1100px) rotateY(0deg); }
-        .feed-block.open .dp-info { transition-delay: .12s; }
-        .feed-block.open .dp-img  { transition-delay: .30s; }
-        .feed-block.open .dp-text { transition-delay: .50s; }
-        .feed-block.open .dp-plan { transition-delay: .70s; }
+        .p-cover .scene { transition: scale 1.2s cubic-bezier(.16,1,.3,1); }
+        @media (hover: hover) { .p-item:not(.open) .p-cover:hover .scene { scale: 1.04; } }
+        .p-no { position: absolute; top: 14px; left: 16px; z-index: 3; font-size: 9px; color: rgba(255,255,255,0.7); }
 
-        /* inner content also unfolds immersively: photos zoom-resolve, text rises */
-        .dpanel .scene, .dpanel .sp { transition: transform 1.4s cubic-bezier(.16,1,.3,1); }
-        .dp-img .scene, .dp-plan .sp { transform: scale(1.22); }
-        .feed-block.open .dp-img .scene { transform: scale(1); transition-delay: .42s; }
-        .feed-block.open .dp-plan .sp { transform: scale(1); transition-delay: .82s; }
-        .dp-info > *, .dp-text > * { opacity: 0; transform: translateY(18px); transition: opacity .8s ease, transform .9s cubic-bezier(.16,1,.3,1); }
-        .feed-block.open .dp-info > * { opacity: 1; transform: none; transition-delay: .34s; }
-        .feed-block.open .dp-text > * { opacity: 1; transform: none; transition-delay: .78s; }
+        .p-cap { display: flex; align-items: flex-start; gap: 14px; margin-top: 16px; }
+        .p-ico { flex: none; width: clamp(30px, 3.4vh, 50px); height: clamp(30px, 3.4vh, 50px); background: #000; display: block; }
+        .p-ico svg { width: 100%; height: 100%; display: block; }
+        .p-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(15px, 1.6vw, 19px); line-height: 1.1; color: var(--ink); letter-spacing: -0.01em; }
+        .p-loc { margin-top: 5px; font-size: clamp(10px, 1vw, 14px); color: var(--mut); text-transform: uppercase; letter-spacing: 0.06em; }
 
-        .dp-info { width: min(100%, 320px); background: var(--bg-2); padding: clamp(18px,2.2vw,28px); display: flex; flex-direction: column; }
-        .d-cat { font-size: 8.5px; color: var(--bronze); }
-        .d-lede { font-size: clamp(15px,1.4vw,20px); line-height: 1.3; letter-spacing: -0.01em; color: var(--ink); margin: 10px 0 16px; }
-        .d-dl { display: flex; flex-direction: column; margin-top: auto; }
-        .d-dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--line-soft); }
-        .d-dl dt { font-size: 8px; color: var(--mut); }
-        .d-dl dd { font-family: var(--font-mono); font-size: 10px; color: var(--ink); text-align: right; }
+        /* panels: collapsed to nothing until the row opens */
+        .p-cell {
+          flex: none; position: relative; height: var(--ph); overflow: hidden;
+          width: 0; margin-left: 0; opacity: 0;
+          transition: width .78s cubic-bezier(.45,0,.55,1), height .78s cubic-bezier(.45,0,.55,1),
+                      margin-left .78s cubic-bezier(.45,0,.55,1), opacity .45s ease;
+          will-change: width;
+        }
+        .p-item.open .p-cell { margin-left: var(--gap); opacity: 1; transition-delay: 0s, 0s, 0s, .18s; }
+        .p-item.open .c-info  { width: min(78vw, 330px); }
+        .p-item.open .c-photo { width: calc(var(--ph) * 1.42); }
+        .p-item.open .c-text  { width: min(74vw, 370px); }
+        .p-item.open .c-plan  { width: calc(var(--ph) * 1.3); }
+        .p-item.open .c-end   { width: 90px; }
 
-        .dp-img { width: min(84vw, 480px); background: #0b0a09; }
-        .dp-img .scene { position: absolute; inset: 0; }
+        .c-photo .scene, .c-plan .sp { position: absolute; inset: 0; }
+        .c-photo .scene { transition: transform 1.3s cubic-bezier(.16,1,.3,1); transform: scale(1.15); }
+        .p-item.open .c-photo .scene { transform: scale(1); }
 
-        .dp-text { width: min(78vw, 360px); background: var(--bg-2); padding: clamp(18px,2.2vw,30px); display: flex; flex-direction: column; gap: 12px; justify-content: center; }
-        .d-kick { font-size: 8.5px; color: var(--bronze); }
-        .d-body { font-size: clamp(13px,1.2vw,16px); line-height: 1.65; color: var(--ink); }
+        .cell-in { width: min(74vw, 330px); height: 100%; display: flex; flex-direction: column; padding: clamp(16px, 2vh, 26px); background: var(--bg-2); }
+        .c-text .cell-in { width: min(74vw, 370px); justify-content: center; gap: 12px; }
+        .c-kick { font-size: 8.5px; color: var(--mut); }
+        .c-lede { font-size: clamp(15px, 1.4vw, 20px); line-height: 1.3; letter-spacing: -0.01em; color: var(--ink); margin: 10px 0 16px; }
+        .c-dl { display: flex; flex-direction: column; margin-top: auto; }
+        .c-dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--line-soft); }
+        .c-dl dt { font-size: 8px; color: var(--mut); }
+        .c-dl dd { font-family: var(--font-mono); font-size: 10px; color: var(--ink); text-align: right; }
+        .c-body { font-size: clamp(13px, 1.2vw, 16px); line-height: 1.65; color: var(--ink); }
 
-        .dp-plan { width: min(84vw, 480px); }
-        .dp-plan .sp { position: absolute; inset: 0; }
+        .c-end { display: flex; align-items: center; justify-content: center; }
+        .c-close { background: none; border: 1px solid var(--line); padding: 12px 10px; font-size: 9px; color: var(--ink); white-space: nowrap; writing-mode: vertical-rl; }
 
-        .d-hint { position: absolute; right: 10px; bottom: 6px; z-index: 3; font-size: 8.5px; color: var(--mut); pointer-events: none; opacity: 0; transition: opacity .5s ease 1.2s; }
-        .feed-block.open .d-hint { opacity: 1; }
-
-        /* ---- site plan ---- */
+        /* ---------- site plan ---------- */
         .sp { position: relative; background: #f1f0ec; overflow: hidden; }
         .sp::before { content: ""; position: absolute; inset: 0; background:
-          repeating-linear-gradient(90deg, transparent 0 48px, rgba(15,15,16,0.045) 48px 49px),
-          repeating-linear-gradient(0deg, transparent 0 48px, rgba(15,15,16,0.045) 48px 49px); }
-        .sp-road { position: absolute; background: #fff; box-shadow: 0 0 0 1px rgba(15,15,16,0.07); }
+          repeating-linear-gradient(90deg, transparent 0 48px, rgba(0,0,0,0.045) 48px 49px),
+          repeating-linear-gradient(0deg, transparent 0 48px, rgba(0,0,0,0.045) 48px 49px); }
+        .sp-road { position: absolute; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.07); }
         .sp-road.rh { left: 0; right: 0; top: 62%; height: 42px; }
         .sp-road.rv { top: 0; bottom: 0; left: 24%; width: 38px; transform: skewX(-12deg); }
-        .sp-blk { position: absolute; background: #fff; border: 1px solid rgba(15,15,16,0.16); }
+        .sp-blk { position: absolute; background: #fff; border: 1px solid rgba(0,0,0,0.16); }
         .sp-blk.b1 { left: 30%; top: 14%; width: 16%; height: 13%; }
         .sp-blk.b2 { left: 52%; top: 10%; width: 22%; height: 16%; transform: rotate(3deg); }
         .sp-blk.b3 { left: 78%; top: 20%; width: 14%; height: 22%; }
@@ -257,20 +466,12 @@ export default function Feed() {
         .sp-site { position: absolute; left: 30%; top: 12%; width: 46%; height: 54%; border: 1.5px dashed #c0392b; transform: rotate(-4deg); }
         .sp-tag { position: absolute; left: 14px; bottom: 12px; font-size: 9px; color: #6a6a6a; background: rgba(255,255,255,0.72); padding: 5px 9px; }
 
-        /* not enough room beside the photo -> stack below: info first, then the strip (swipeable) */
-        @media (max-width: 1180px) {
-          .detail-left, .detail-right {
-            position: relative; left: auto; right: auto; width: 100%; top: auto; bottom: auto;
-            height: 0; overflow: hidden; transition: height .7s cubic-bezier(.16,1,.3,1); display: block;
-          }
-          .feed-block.open .detail-left { height: auto; margin-top: 14px; }
-          .feed-block.open .detail-right { height: clamp(210px, 44vh, 340px); margin-top: 12px; }
-          .dp-info { width: 100%; }
-        }
-        @media (max-width: 620px) {
-          .feed-block.open .detail-right { height: clamp(200px, 42vh, 300px); }
-          .dp-text { width: 74vw; }
-          .dp-img, .dp-plan { width: 82vw; }
+        @media (max-width: 720px) {
+          .p-item { --ph: clamp(200px, 34vh, 380px); }
+          .p-item.open { --ph: clamp(280px, 48vh, 520px); }
+          .p-item.open .c-photo { width: calc(var(--ph) * 1.3); }
+          .p-item.open .c-plan { width: calc(var(--ph) * 1.2); }
+          .p-cap { gap: 11px; margin-top: 12px; }
         }
       `}</style>
     </section>

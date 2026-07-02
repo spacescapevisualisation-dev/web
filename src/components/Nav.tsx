@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 function scrollTo(id: string) {
   const el = document.getElementById(id);
@@ -10,59 +10,53 @@ function scrollTo(id: string) {
   else el.scrollIntoView({ behavior: "smooth" });
 }
 
+/**
+ * big.dk-style chrome: the wordmark sits fixed top-left and is itself the
+ * menu toggle — clicking it slides a white panel in from the left edge.
+ */
 export default function Nav() {
-  const [hidden, setHidden] = useState(false);
-  const [solid, setSolid] = useState(false);
   const [open, setOpen] = useState(false);
-  const lastY = useRef(0);
 
+  // menu open: freeze the smooth scroll, close on Escape
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY;
-      setSolid(y > 60);
-      setHidden(y > 240 && y > lastY.current);
-      lastY.current = y;
+    if (!open) return;
+    const lenis = (window as unknown as { __lenis?: { stop?: () => void; start?: () => void } }).__lenis;
+    lenis?.stop?.();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      lenis?.start?.();
+      window.removeEventListener("keydown", onKey);
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [open]);
 
   const links: [string, string][] = [
-    ["Work", "work"],
+    ["Projects", "work"],
     ["Contact", "contact"],
   ];
 
   return (
     <>
-      <header className={`nav ${solid ? "solid" : ""} ${hidden ? "hide" : ""}`}>
-        <button
-          className="nav-logo display"
-          data-cursor
-          onClick={() => scrollTo("top")}
-          aria-label="Space Scape, to top"
-        >
-          SPACE<span>SCAPE</span>
-        </button>
+      <button
+        className={`logo display ${open ? "open" : ""}`}
+        data-cursor
+        data-cursor-label={open ? "Close" : "Menu"}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label={open ? "Close menu" : "Open menu"}
+      >
+        SS<i>/</i>
+      </button>
 
-        <nav className="nav-links">
-          {links.map(([label, id]) => (
-            <button key={id} className="nav-link mono" data-cursor onClick={() => scrollTo(id)}>
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        <button className="nav-burger" data-cursor onClick={() => setOpen((o) => !o)} aria-label="Menu">
-          <i /><i />
-        </button>
-      </header>
-
-      <div className={`nav-overlay ${open ? "open" : ""}`}>
+      <nav className={`side ${open ? "open" : ""}`} aria-hidden={!open}>
+        <span className="side-mark display">SPACE SCAPE</span>
         {links.map(([label, id], i) => (
           <button
             key={id}
-            className="nav-ov-link display"
-            style={{ transitionDelay: `${0.08 * i + 0.1}s` }}
+            className="side-link"
+            data-cursor
+            tabIndex={open ? 0 : -1}
+            style={{ transitionDelay: open ? `${0.06 * i + 0.14}s` : "0s" }}
             onClick={() => {
               setOpen(false);
               scrollTo(id);
@@ -71,42 +65,56 @@ export default function Nav() {
             {label}
           </button>
         ))}
-      </div>
+        <a
+          className="side-link side-mail"
+          data-cursor
+          tabIndex={open ? 0 : -1}
+          style={{ transitionDelay: open ? "0.26s" : "0s" }}
+          href="mailto:studio@spacescape.com"
+        >
+          studio@spacescape.com
+        </a>
+        <span className="side-foot mono">Architectural Visualisation · Pune</span>
+      </nav>
+
+      {open && <button className="side-veil" aria-label="Close menu" onClick={() => setOpen(false)} />}
 
       <style>{`
-        .nav {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 7000;
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 26px clamp(18px, 4vw, 56px);
-          transition: transform .6s cubic-bezier(.16,1,.3,1), background .5s, padding .5s, opacity .5s;
-          mix-blend-mode: difference;
+        .logo {
+          position: fixed; top: 0; left: 0; z-index: 7100;
+          padding: 13px clamp(14px, 3vw, 26px);
+          background: none; border: none;
+          font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink);
+          transition: opacity .3s;
         }
-        .nav.solid { padding-top: 18px; padding-bottom: 18px; }
-        /* logo always stays; only the links tuck away on scroll-down */
-        .nav-links, .nav-burger { transition: opacity .5s, transform .5s cubic-bezier(.16,1,.3,1); }
-        .nav.hide .nav-links, .nav.hide .nav-burger { opacity: 0; transform: translateY(-14px); pointer-events: none; }
-        .nav-logo { font-size: clamp(15px, 1.5vw, 18px); font-weight: 600; color: #fff; letter-spacing: -0.01em; }
-        .nav-logo span { margin-left: .22em; }
-        .nav-links { display: flex; gap: clamp(20px, 2.4vw, 46px); }
-        .nav-link { font-size: 11px; color: #fff; opacity: .82; transition: opacity .3s; background: none; border: none; }
-        .nav-link:hover { opacity: 1; }
-        .nav-burger { display: none; flex-direction: column; gap: 6px; background: none; border: none; }
-        .nav-burger i { width: 24px; height: 1.5px; background: #fff; display: block; }
-        @media (max-width: 720px) {
-          .nav-links { display: none; }
-          .nav-burger { display: flex; }
+        .logo i { font-style: normal; font-weight: 300; opacity: .4; transition: transform .5s cubic-bezier(.16,1,.3,1); display: inline-block; }
+        .logo.open i { transform: rotate(90deg); }
+        .logo:hover { opacity: .6; }
+
+        .side {
+          position: fixed; top: 0; bottom: 0; left: 0; z-index: 7000;
+          width: min(86vw, 340px); background: #fff;
+          display: flex; flex-direction: column; justify-content: center; gap: 6px;
+          padding: 0 clamp(22px, 4vw, 40px);
+          transform: translateX(-100%); opacity: 0;
+          transition: transform .6s cubic-bezier(.45,0,.55,1), opacity .5s ease;
+          border-right: 1px solid var(--line-soft);
+          pointer-events: none;
         }
-        .nav-overlay {
-          position: fixed; inset: 0; z-index: 6900; background: rgba(255,255,255,0.97);
-          backdrop-filter: blur(8px); display: flex; flex-direction: column; align-items: center; justify-content: center;
-          gap: 8px; opacity: 0; pointer-events: none; transition: opacity .5s;
+        .side.open { transform: translateX(0); opacity: 1; pointer-events: auto; }
+        .side-mark { position: absolute; top: 58px; left: clamp(22px, 4vw, 40px); font-size: 13px; color: var(--mut); letter-spacing: .08em; }
+        .side-link {
+          background: none; border: none; text-align: left; padding: 7px 0;
+          font-family: var(--font-display); font-size: clamp(26px, 3vw, 38px); font-weight: 400;
+          letter-spacing: -0.02em; color: var(--ink); text-transform: uppercase;
+          opacity: 0; transform: translateX(-16px);
+          transition: opacity .5s ease, transform .55s cubic-bezier(.16,1,.3,1), color .3s;
         }
-        .nav-overlay.open { opacity: 1; pointer-events: auto; }
-        .nav-ov-link {
-          font-size: clamp(40px, 12vw, 92px); color: var(--ink); background: none; border: none;
-          opacity: 0; transform: translateY(30px); transition: opacity .6s, transform .6s; font-weight: 500; letter-spacing: -0.03em;
-        }
-        .nav-overlay.open .nav-ov-link { opacity: 1; transform: none; }
+        .side.open .side-link { opacity: 1; transform: none; }
+        .side-link:hover { color: var(--mut); }
+        .side-mail { font-size: clamp(14px, 1.4vw, 17px); text-transform: none; margin-top: 18px; }
+        .side-foot { position: absolute; bottom: 26px; left: clamp(22px, 4vw, 40px); font-size: 8.5px; color: var(--faint); }
+        .side-veil { position: fixed; inset: 0; z-index: 6900; background: rgba(0,0,0,0.08); border: none; }
       `}</style>
     </>
   );
