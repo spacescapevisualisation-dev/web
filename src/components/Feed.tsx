@@ -178,6 +178,7 @@ export default function Feed() {
   const [openNo, setOpenNo] = useState<string | null>(null);
   const [cat, setCat] = useState("All");
   const [index, setIndex] = useState(false); // the tab's "everything" panel
+  const [fopen, setFopen] = useState(false); // mobile filter panel (right slide-in)
 
   const shown = PROJECTS.filter((p) => cat === "All" || p.typology === cat);
   const listed = cat === "All" ? PROJECTS : shown;
@@ -230,7 +231,11 @@ export default function Feed() {
   /* keep scroll maths honest after unfolds, and close on Escape */
   useEffect(() => {
     const t = setTimeout(() => ScrollTrigger.refresh(), 850);
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenNo(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpenNo(null);
+      setFopen(false);
+    };
     window.addEventListener("keydown", onKey);
     return () => { clearTimeout(t); window.removeEventListener("keydown", onKey); };
   }, [openNo, cat]);
@@ -296,6 +301,50 @@ export default function Feed() {
       </div>
       {index && <button className="ci-veil" aria-label="Close index" onClick={() => setIndex(false)} />}
 
+      {/* ---- mobile chrome: funnel icon top-right → categories slide in from the right ---- */}
+      <button
+        className="fbtn"
+        data-cursor
+        aria-expanded={fopen}
+        aria-label={fopen ? "Close filters" : "Open filters"}
+        onClick={() => setFopen((v) => !v)}
+      >
+        {fopen ? <span className="fx">✕</span> : <><i /><i /><i /><i /></>}
+      </button>
+
+      <aside className={`fpanel ${fopen ? "open" : ""}`} aria-hidden={!fopen}>
+        <span className="fp-kick mono">Categories</span>
+        {CATS.map((c) => (
+          <button
+            key={c}
+            className={`fp-cat mono ${c === cat ? "on" : ""}`}
+            tabIndex={fopen ? 0 : -1}
+            onClick={() => {
+              setCat(c);
+              setOpenNo(null);
+              setIndex(false);
+            }}
+          >
+            {c}
+          </button>
+        ))}
+        <span className="fp-kick mono fp-kick2">Projects</span>
+        {shown.map((p) => (
+          <button
+            key={p.no}
+            className="fp-proj"
+            tabIndex={fopen ? 0 : -1}
+            onClick={() => {
+              setFopen(false);
+              jumpTo(p);
+            }}
+          >
+            {p.name}
+          </button>
+        ))}
+      </aside>
+      {fopen && <button className="fp-veil" aria-label="Close filters" onClick={() => setFopen(false)} />}
+
       {/* ---- the feed, clipped like big.dk's projects-container ---- */}
       <div className="projects-container">
         <div className="projects-scaler" ref={scaler}>
@@ -341,7 +390,49 @@ export default function Feed() {
         }
         .cat:hover { color: var(--ink); }
         .cat.on { color: var(--ink); text-decoration: underline; text-underline-offset: 5px; }
-        @media (max-width: 860px) { .catbar { justify-content: flex-start; padding-left: 92px; } }
+
+        /* ---------- mobile chrome: white strip, funnel filter, right panel ---------- */
+        .fbtn { display: none; }
+        .fpanel {
+          position: fixed; top: 0; right: 0; bottom: 0; z-index: 6550;
+          width: min(70vw, 250px); background: #fff;
+          border-left: 1px solid var(--line-soft);
+          padding: 58px 24px 30px; overflow-y: auto;
+          display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+          transform: translateX(100%); opacity: 0;
+          transition: transform .55s cubic-bezier(.45,0,.55,1), opacity .4s ease;
+        }
+        .fpanel.open { transform: none; opacity: 1; }
+        .fp-kick { font-size: 8.5px; color: var(--faint); margin-bottom: 8px; }
+        .fp-kick2 { margin-top: 28px; }
+        .fp-cat { background: none; border: none; padding: 5px 0; font-size: 10px; color: var(--mut); }
+        .fp-cat.on { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+        .fp-proj {
+          background: none; border: none; text-align: left; padding: 6px 0;
+          font-family: var(--font-display); font-size: 16px; letter-spacing: -0.01em; color: var(--ink);
+        }
+        .fp-veil { position: fixed; inset: 0; z-index: 6500; background: rgba(0,0,0,0.1); border: none; }
+        @media (min-width: 861px) { .fpanel, .fp-veil { display: none; } }
+
+        @media (max-width: 860px) {
+          .catbar { display: none; }
+          /* white strip under the fixed chrome, like big.dk's phone header */
+          .feed::before {
+            content: ""; position: fixed; top: 0; left: 0; right: 0; height: 46px;
+            background: rgba(255,255,255,0.94); backdrop-filter: blur(6px); z-index: 6450;
+          }
+          .fbtn {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+            position: fixed; top: 0; right: 0; z-index: 6600;
+            min-height: 46px; padding: 14px 20px; background: none; border: none;
+          }
+          .fbtn i { display: block; height: 2px; background: #000; }
+          .fbtn i:nth-child(1) { width: 15px; }
+          .fbtn i:nth-child(2) { width: 11px; }
+          .fbtn i:nth-child(3) { width: 8px; }
+          .fbtn i:nth-child(4) { width: 5px; }
+          .fx { font-size: 13px; line-height: 1; color: #000; }
+        }
 
         /* the tab's full index — everything, listed */
         .cat-index {
@@ -373,8 +464,9 @@ export default function Feed() {
         .projects-scaler { will-change: transform; }
 
         .p-item {
-          /* closed / open panel heights — the whole unfold is this one variable */
+          /* closed / open cell heights — the whole unfold is this one variable */
           --ph: clamp(240px, 46vh, 560px);
+          --ch: var(--ph);
           --gap: clamp(26px, 5vw, 84px);
           margin-bottom: clamp(30px, 6vh, 64px);
         }
@@ -382,7 +474,7 @@ export default function Feed() {
         .ar-std  { --ar: 1.5; }
         .ar-wide { --ar: 1.7778; }
         .ar-tall { --ar: 0.8; }
-        .p-item { --cover-w: calc(var(--ph) * var(--ar)); }
+        .p-item { --cover-w: calc(var(--ch) * var(--ar)); }
 
         .p-strip {
           display: flex; align-items: flex-start;
@@ -399,7 +491,7 @@ export default function Feed() {
         .p-lead { flex: none; display: flex; flex-direction: column; }
         .p-cover {
           position: relative; display: block; border: none; padding: 0; background: #0b0a09;
-          width: var(--cover-w); height: var(--ph); overflow: hidden;
+          width: var(--cover-w); height: var(--ch); overflow: hidden;
           transition: width .78s cubic-bezier(.45,0,.55,1), height .78s cubic-bezier(.45,0,.55,1);
           will-change: width, height;
         }
@@ -407,7 +499,9 @@ export default function Feed() {
         @media (hover: hover) { .p-item:not(.open) .p-cover:hover .scene { scale: 1.04; } }
         .p-no { position: absolute; top: 14px; left: 16px; z-index: 3; font-size: 9px; color: rgba(255,255,255,0.7); }
 
-        .p-cap { display: flex; align-items: flex-start; gap: 14px; margin-top: 16px; }
+        /* desktop: pictogram above the text (big.dk md+); phones row them */
+        .p-cap { display: flex; flex-direction: column; align-items: flex-start; margin-top: 18px; }
+        .p-cap-txt { margin-top: 16px; }
         .p-ico { flex: none; width: clamp(30px, 3.4vh, 50px); height: clamp(30px, 3.4vh, 50px); background: #000; display: block; }
         .p-ico svg { width: 100%; height: 100%; display: block; }
         .p-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(15px, 1.6vw, 19px); line-height: 1.1; color: var(--ink); letter-spacing: -0.01em; }
@@ -415,7 +509,7 @@ export default function Feed() {
 
         /* panels: collapsed to nothing until the row opens */
         .p-cell {
-          flex: none; position: relative; height: var(--ph); overflow: hidden;
+          flex: none; position: relative; height: var(--ch); overflow: hidden;
           width: 0; margin-left: 0; opacity: 0;
           transition: width .78s cubic-bezier(.45,0,.55,1), height .78s cubic-bezier(.45,0,.55,1),
                       margin-left .78s cubic-bezier(.45,0,.55,1), opacity .45s ease;
@@ -423,9 +517,9 @@ export default function Feed() {
         }
         .p-item.open .p-cell { margin-left: var(--gap); opacity: 1; transition-delay: 0s, 0s, 0s, .18s; }
         .p-item.open .c-info  { width: min(78vw, 330px); }
-        .p-item.open .c-photo { width: calc(var(--ph) * 1.42); }
+        .p-item.open .c-photo { width: calc(var(--ch) * 1.42); }
         .p-item.open .c-text  { width: min(74vw, 370px); }
-        .p-item.open .c-plan  { width: calc(var(--ph) * 1.3); }
+        .p-item.open .c-plan  { width: calc(var(--ch) * 1.3); }
         .p-item.open .c-end   { width: 90px; }
 
         .c-photo .scene, .c-plan .sp { position: absolute; inset: 0; }
@@ -467,11 +561,13 @@ export default function Feed() {
         .sp-tag { position: absolute; left: 14px; bottom: 12px; font-size: 9px; color: #6a6a6a; background: rgba(255,255,255,0.72); padding: 5px 9px; }
 
         @media (max-width: 720px) {
-          .p-item { --ph: clamp(200px, 34vh, 380px); }
-          .p-item.open { --ph: clamp(280px, 48vh, 520px); }
-          .p-item.open .c-photo { width: calc(var(--ph) * 1.3); }
-          .p-item.open .c-plan { width: calc(var(--ph) * 1.2); }
-          .p-cap { gap: 11px; margin-top: 12px; }
+          /* phone covers: fixed 90vw width, height follows the aspect (capped) */
+          .p-item { --ch: min(calc(90vw / var(--ar)), 56vh); }
+          .p-item.open { --ch: clamp(280px, 48vh, 520px); }
+          .p-item.open .c-photo { width: calc(var(--ch) * 1.3); }
+          .p-item.open .c-plan { width: calc(var(--ch) * 1.2); }
+          .p-cap { flex-direction: row; gap: 12px; margin-top: 12px; }
+          .p-cap-txt { margin-top: 0; }
         }
       `}</style>
     </section>
