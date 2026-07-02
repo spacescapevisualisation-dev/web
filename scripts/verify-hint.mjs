@@ -24,14 +24,15 @@ await page.waitForTimeout(300);
 await cover.click();
 await page.waitForSelector(".p-item.open .p-strip", { timeout: 5000 });
 
-// sample scrollLeft during the peek window (unfold .78s + delay .95s + 1.2s peek)
+// sample scrollLeft through the slide window (unfold .78s + delay .95s + .8s slide)
 let peak = 0;
 const t0 = Date.now();
-while (Date.now() - t0 < 3400) {
+while (Date.now() - t0 < 3200) {
   const sl = await page.evaluate(() => document.querySelector(".p-item.open .p-strip")?.scrollLeft ?? 0);
   peak = Math.max(peak, sl);
   await page.waitForTimeout(80);
 }
+// the strip must STAY parked at the offset, not return to 0
 const settled = await page.evaluate(() => document.querySelector(".p-item.open .p-strip")?.scrollLeft ?? -1);
 
 const hintVisible = await page.evaluate(() => {
@@ -51,14 +52,14 @@ const hintGone = await page.evaluate(() => {
 });
 const learned = await page.evaluate(() => sessionStorage.getItem("ss-swipe-known"));
 
-console.log(`peek max scrollLeft: ${Math.round(peak)}px (want ~72)`);
-console.log(`settled back to: ${settled}px (want 0)`);
-console.log(`hint visible during peek: ${hintVisible}`);
+console.log(`slide max scrollLeft: ${Math.round(peak)}px (want ~72)`);
+console.log(`parked at: ${settled}px (want ~72, must NOT return to 0)`);
+console.log(`hint visible while parked: ${hintVisible}`);
 console.log(`hint hidden after swipe: ${hintGone}`);
 console.log(`session learned flag: ${learned}`);
 console.log(`page errors: ${errors.length ? errors.join(" | ") : "none"}`);
 
-const pass = peak > 40 && settled === 0 && hintVisible && hintGone && learned === "1" && errors.length === 0;
+const pass = peak > 60 && settled >= 60 && settled <= 84 && hintVisible && hintGone && learned === "1" && errors.length === 0;
 console.log(pass ? "PASS" : "FAIL");
 await browser.close();
 process.exit(pass ? 0 : 1);

@@ -106,8 +106,9 @@ function ProjectRow({
     };
 
     let nudging = false;
+    let rest = 0; // where the auto-slide parks the strip
     const onScroll = () => {
-      if (!nudging && el.scrollLeft > 40) {
+      if (!nudging && Math.abs(el.scrollLeft - rest) > 36) {
         item?.classList.add("was-scrolled");
         learn();
       }
@@ -124,21 +125,30 @@ function ProjectRow({
       nudging = false;
       cancelAnimationFrame(raf);
     };
-    if (touch && !reduce && !knows()) {
-      // wait for the .78s unfold, then one sideways breath: 0 → 72px → 0
+    if (touch) {
+      // once the unfold settles, ease the strip a little way in and leave it
+      // there — the cut-off panel edge is the invitation to keep going
+      const SLIDE = 72;
       timer = setTimeout(() => {
         if (el.scrollLeft > 4) return; // already exploring on their own
+        rest = SLIDE;
         nudging = true;
+        if (reduce) {
+          el.scrollLeft = SLIDE;
+          requestAnimationFrame(() => {
+            nudging = false;
+          });
+          return;
+        }
         const t0 = performance.now();
         const tick = (now: number) => {
           if (!nudging) return;
-          const p = (now - t0) / 1200;
+          const p = Math.min(1, (now - t0) / 800);
+          el.scrollLeft = SLIDE * (1 - Math.pow(1 - p, 3)); // ease-out, no return
           if (p >= 1) {
-            el.scrollLeft = 0;
             nudging = false;
             return;
           }
-          el.scrollLeft = Math.sin(p * Math.PI) * 72;
           raf = requestAnimationFrame(tick);
         };
         raf = requestAnimationFrame(tick);
