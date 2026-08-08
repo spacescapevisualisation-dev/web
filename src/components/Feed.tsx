@@ -139,7 +139,7 @@ function ProjectRow({
       // Move the gallery just far enough to crop the cover and reveal the
       // beginning of the next panel. That visual interruption makes the
       // horizontal direction obvious without taking control away for long.
-      const SLIDE = 128;
+      const SLIDE = 144;
       timer = setTimeout(() => {
         if (el.scrollLeft > 4) return; // already exploring on their own
         rest = SLIDE;

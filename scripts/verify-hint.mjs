@@ -52,14 +52,14 @@ const hintGone = await page.evaluate(() => {
 });
 const learned = await page.evaluate(() => sessionStorage.getItem("ss-swipe-known"));
 
-console.log(`slide max scrollLeft: ${Math.round(peak)}px (want ~128)`);
-console.log(`parked at: ${settled}px (want ~128, must NOT return to 0)`);
+console.log(`slide max scrollLeft: ${Math.round(peak)}px (want ~144)`);
+console.log(`parked at: ${settled}px (want ~144, must NOT return to 0)`);
 console.log(`hint visible while parked: ${hintVisible}`);
 console.log(`hint hidden after swipe: ${hintGone}`);
 console.log(`session learned flag: ${learned}`);
 console.log(`page errors: ${errors.length ? errors.join(" | ") : "none"}`);
 
-const pass = peak > 112 && settled >= 112 && settled <= 144 && hintVisible && hintGone && learned === "1" && errors.length === 0;
+const pass = peak > 130 && settled >= 130 && settled <= 158 && hintVisible && hintGone && learned === "1" && errors.length === 0;
 console.log(pass ? "PASS" : "FAIL");
 await browser.close();
 process.exit(pass ? 0 : 1);
