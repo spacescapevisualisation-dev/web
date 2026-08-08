@@ -189,6 +189,30 @@ const PROJECT_CATALOG: Project[] = [
     span: "wide",
   },
   {
+    slug: "arkscape",
+    order: 6,
+    no: "07",
+    name: "ArkScape",
+    location: "Pune, India",
+    year: "2025",
+    category: "Residential Architecture",
+    architect: "Rohit Kawade",
+    typology: "Residential",
+    discipline: "Exterior",
+    status: "Completed",
+    size: "Urban residence",
+    desc: "A refined urban residence balancing classical proportions with clean contemporary detailing and planted outdoor spaces.",
+    desc2: "ArkScape combines a composed, symmetrical street presence with deep balconies, tall glazing and carefully integrated planting. Subtle mouldings and a warm neutral palette lend the façade a timeless character, while generous openings and rooftop terraces bring light, greenery and openness into the compact urban residence.",
+    featured: true,
+    scene: "s5",
+    sceneB: "s3",
+    mainImageUrl: "/project-images/arkscape/angular.webp",
+    secondaryImageUrl: "/project-images/arkscape/front.webp",
+    imageAlt: "Angular view of ArkScape with planted balconies, classical proportions and a warm neutral façade",
+    align: "right",
+    span: "tall",
+  },
+  {
     no: "04",
     name: "Monolith Tower",
     location: "Dubai, AE",
@@ -300,7 +324,7 @@ const PROJECT_CATALOG: Project[] = [
 
 // Only the three commissioned portfolio projects are active. Keeping this
 // immutable selection also prevents placeholder entries from generating pages.
-export const PROJECTS: Project[] = PROJECT_CATALOG.slice(0, 6);
+export const PROJECTS: Project[] = PROJECT_CATALOG.slice(0, 7);
 
 export const projectSlug = (project: Project) =>
   project.slug || project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
