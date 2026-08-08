@@ -1,4 +1,6 @@
 export type Project = {
+  slug?: string;
+  order?: number;
   no: string;
   name: string;
   location: string;
@@ -6,7 +8,9 @@ export type Project = {
   category: string;
   /** the architect / design studio who authored the design — always credited */
   architect: string;
+  developer?: string;
   typology: string;
+  discipline?: "Exterior" | "Interior";
   status: string;
   size: string;
   desc: string;
@@ -15,14 +19,177 @@ export type Project = {
   /** placeholder render gradient keys (s1..s6) until real imagery is dropped in */
   scene: string;
   sceneB: string;
+  /** CMS image URLs; the scene gradients remain as graceful fallbacks */
+  mainImageUrl?: string;
+  secondaryImageUrl?: string;
+  tertiaryImageUrl?: string;
+  quaternaryImageUrl?: string;
+  additionalImageUrls?: string[];
+  imageAlt?: string;
   align: "left" | "right" | "full";
   /** grid tile size for the works grid */
   span: "tall" | "wide" | "std";
 };
 
-export const PROJECTS: Project[] = [
+const PROJECT_CATALOG: Project[] = [
   {
+    slug: "megaverse",
+    order: 0,
     no: "01",
+    name: "Megaverse",
+    location: "Pune, India",
+    year: "2025",
+    category: "Commercial",
+    architect: "AB Architects",
+    developer: "Jeswani Associates",
+    typology: "Commercial",
+    discipline: "Exterior",
+    status: "Completed",
+    size: "Multi-tower development",
+    desc: "A vertical neighbourhood built around life at the ground plane. Megaverse brings together contemporary residential towers, landscape, sport and social infrastructure around a vibrant central community podium.",
+    desc2: "Megaverse is a contemporary high-rise residential development conceived around a central landscape and recreation podium. Multiple residential towers frame an active communal environment containing sports courts, swimming facilities, landscaped gardens, pedestrian trails, play areas and social spaces. The architecture combines repetitive modular façades with recessed balconies and strong horizontal lines, creating depth and rhythm across the residential elevations. At ground and podium level, the scale shifts toward the pedestrian, where landscape, recreation and shaded gathering spaces create a more intimate community environment. The masterplan prioritizes the shared experience of residents, positioning recreational spaces at the centre while keeping vehicular circulation predominantly along the site's perimeter. Surrounded by dense greenery, Megaverse explores how high-density urban living can coexist with generous communal landscapes and an active outdoor lifestyle.",
+    featured: true,
+    scene: "s5",
+    sceneB: "s1",
+    mainImageUrl: "/project-images/megaverse/masterplan.webp",
+    secondaryImageUrl: "/project-images/megaverse/architecture.webp",
+    tertiaryImageUrl: "/project-images/megaverse/experience.webp",
+    imageAlt: "Aerial masterplan view of Megaverse residential towers surrounding a central recreation podium",
+    align: "full",
+    span: "wide",
+  },
+  {
+    slug: "private-residence",
+    order: 1,
+    no: "02",
+    name: "Private Residence",
+    location: "Mumbai, India",
+    year: "2025",
+    category: "Residential · Interiors",
+    architect: "Sareen Shaikalgar",
+    typology: "Residential",
+    discipline: "Interior",
+    status: "Completed",
+    size: "Private residence",
+    desc: "A warm, contemporary interior shaped by classical wall mouldings, curved forms, soft neutral finishes and rich timber accents.",
+    desc2: "Private Residence is a warm, contemporary interior shaped by classical wall mouldings, curved forms, soft neutral finishes and rich timber accents. Layered lighting, sculptural furniture, patterned textiles and subtle Indian details bring depth and personality to the compact living and dining spaces.",
+    featured: true,
+    scene: "s4",
+    sceneB: "s2",
+    mainImageUrl: "/project-images/private-residence/sofa-wall.webp",
+    secondaryImageUrl: "/project-images/private-residence/diagonal-view.webp",
+    tertiaryImageUrl: "/project-images/private-residence/dining-wall.webp",
+    quaternaryImageUrl: "/project-images/private-residence/tv-wall.webp",
+    imageAlt: "Warm contemporary living room with classical wall mouldings and sculptural furniture",
+    align: "left",
+    span: "std",
+  },
+  {
+    slug: "rowhouse-community",
+    order: 2,
+    no: "03",
+    name: "Rowhouse Community",
+    location: "Pune, India",
+    year: "2025",
+    category: "Residential Architecture",
+    architect: "Cubix",
+    developer: "Bhandari Associates",
+    typology: "Residential",
+    discipline: "Exterior",
+    status: "Completed",
+    size: "Rowhouse community",
+    desc: "A contemporary housing development shaped around private living, landscaped open spaces and family-oriented amenities.",
+    desc2: "Rowhouse Community is a contemporary housing development designed around private living, landscaped open spaces and family-oriented amenities. Clean geometric façades, balconies, shaded outdoor areas, gardens and dedicated play zones create a balanced residential environment with a strong focus on community and everyday comfort.",
+    featured: true,
+    scene: "s3",
+    sceneB: "s5",
+    mainImageUrl: "/project-images/rowhouse-community/entry-gate.webp",
+    secondaryImageUrl: "/project-images/rowhouse-community/garden-01.webp",
+    tertiaryImageUrl: "/project-images/rowhouse-community/garden-02.webp",
+    quaternaryImageUrl: "/project-images/rowhouse-community/garden-03.webp",
+    additionalImageUrls: ["/project-images/rowhouse-community/play-area.webp"],
+    imageAlt: "Contemporary rowhouse community entrance with clean geometric façades and landscaped edges",
+    align: "right",
+    span: "wide",
+  },
+  {
+    slug: "private-residence-2",
+    order: 3,
+    no: "04",
+    name: "Private Residence 2",
+    location: "Pune, India",
+    year: "2025",
+    category: "Residential Interior Design",
+    architect: "Rishit Shah",
+    typology: "Residential",
+    discipline: "Interior",
+    status: "Completed",
+    size: "Private residence",
+    desc: "A refined contemporary home defined by soft neutral tones, natural textures and understated luxury.",
+    desc2: "Residence 02 is a refined contemporary home defined by soft neutral tones, natural textures and understated luxury. The interiors combine warm wood, marble, textured wall panels and subtle metallic accents, with sculptural lighting and illuminated stone features adding depth. An open living and dining layout creates a seamless, spacious environment while maintaining a calm and elegant character throughout.",
+    featured: true,
+    scene: "s4",
+    sceneB: "s6",
+    mainImageUrl: "/project-images/private-residence-2/view-01.webp",
+    secondaryImageUrl: "/project-images/private-residence-2/view-02.webp",
+    tertiaryImageUrl: "/project-images/private-residence-2/view-03.webp",
+    quaternaryImageUrl: "/project-images/private-residence-2/view-04.webp",
+    imageAlt: "Refined contemporary living and dining interior in soft neutral tones",
+    align: "left",
+    span: "wide",
+  },
+  {
+    slug: "krushna-kunj",
+    order: 4,
+    no: "05",
+    name: "Krushna Kunj",
+    location: "Pune, India",
+    year: "2025",
+    category: "Residential Architecture",
+    architect: "Ketaki",
+    developer: "Devraj Group",
+    typology: "Residential",
+    discipline: "Exterior",
+    status: "Completed",
+    size: "Residential development",
+    desc: "A contemporary residential building articulated by a crisp white frame, warm terracotta recesses and deeply shaded balconies.",
+    desc2: "Krushna Kunj is a contemporary residential development defined by a disciplined geometric façade and a warm, restrained material palette. Deep-set balconies, terracotta-toned recesses and slender metal railings create rhythm and shade, while planted upper terraces and generous outdoor spaces soften the compact urban form.",
+    featured: true,
+    scene: "s1",
+    sceneB: "s5",
+    mainImageUrl: "/project-images/krushna-kunj/angular.webp",
+    secondaryImageUrl: "/project-images/krushna-kunj/front.webp",
+    tertiaryImageUrl: "/project-images/krushna-kunj/balcony.webp",
+    imageAlt: "Angular view of Krushna Kunj with white framed façades and terracotta balcony recesses",
+    align: "right",
+    span: "tall",
+  },
+  {
+    slug: "bungalow",
+    order: 5,
+    no: "06",
+    name: "Bungalow",
+    location: "Navi Mumbai, India",
+    year: "2025",
+    category: "Residential Architecture",
+    architect: "Aditya Kanchan",
+    typology: "Residential",
+    discipline: "Exterior",
+    status: "Completed",
+    size: "Private bungalow",
+    desc: "A stately neoclassical residence composed around grand proportions, arched glazing and a richly landscaped setting.",
+    desc2: "Bungalow is a stately neoclassical residence shaped by symmetry, tall columns and expansive arched windows. A restrained white façade is grounded by a dark hipped roof, while warm interior light and layered gardens soften the formal composition and create an inviting residential character.",
+    featured: true,
+    scene: "s2",
+    sceneB: "s4",
+    mainImageUrl: "/project-images/bungalow/front.webp",
+    secondaryImageUrl: "/project-images/bungalow/angular.webp",
+    imageAlt: "Neoclassical bungalow in Navi Mumbai with arched glazing, tall columns and formal landscaping",
+    align: "left",
+    span: "wide",
+  },
+  {
+    no: "04",
     name: "Monolith Tower",
     location: "Dubai, AE",
     year: "2026",
@@ -40,7 +207,7 @@ export const PROJECTS: Project[] = [
     span: "tall",
   },
   {
-    no: "02",
+    no: "05",
     name: "Glass Pavilion",
     location: "Reykjavík, IS",
     year: "2025",
@@ -58,7 +225,7 @@ export const PROJECTS: Project[] = [
     span: "std",
   },
   {
-    no: "03",
+    no: "06",
     name: "The Cantilever",
     location: "Big Sur, US",
     year: "2025",
@@ -76,7 +243,7 @@ export const PROJECTS: Project[] = [
     span: "wide",
   },
   {
-    no: "04",
+    no: "07",
     name: "Concrete Cathedral",
     location: "Lisbon, PT",
     year: "2024",
@@ -94,7 +261,7 @@ export const PROJECTS: Project[] = [
     span: "std",
   },
   {
-    no: "05",
+    no: "08",
     name: "Vertical Garden",
     location: "Singapore, SG",
     year: "2026",
@@ -112,7 +279,7 @@ export const PROJECTS: Project[] = [
     span: "tall",
   },
   {
-    no: "06",
+    no: "09",
     name: "Desert Observatory",
     location: "AlUla, SA",
     year: "2027",
@@ -130,3 +297,13 @@ export const PROJECTS: Project[] = [
     span: "std",
   },
 ];
+
+// Only the three commissioned portfolio projects are active. Keeping this
+// immutable selection also prevents placeholder entries from generating pages.
+export const PROJECTS: Project[] = PROJECT_CATALOG.slice(0, 6);
+
+export const projectSlug = (project: Project) =>
+  project.slug || project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+export const getProjectBySlug = (slug: string) =>
+  PROJECTS.find((project) => projectSlug(project) === slug);

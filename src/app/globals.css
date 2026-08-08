@@ -30,6 +30,10 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 ::selection {
@@ -47,6 +51,12 @@ button {
   font: inherit;
   touch-action: manipulation;
 }
+
+/* Native system cursors. These explicit values also override stale custom-
+   cursor CSS that may remain in a development hot-reload session. */
+body { cursor: default; }
+a,
+button { cursor: pointer; }
 
 /* visually hidden, available to screen readers */
 .sr-only {
@@ -87,15 +97,6 @@ button {
 .skip-link:focus-visible {
   transform: translateY(0);
   outline-offset: 2px;
-}
-
-/* hide native cursor on desktop pointers; custom cursor takes over */
-@media (hover: hover) and (pointer: fine) {
-  body,
-  a,
-  button {
-    cursor: none;
-  }
 }
 
 /* film grain + vignette over everything */

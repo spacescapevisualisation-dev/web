@@ -16,7 +16,7 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
-const SITE_URL = "https://jatinli.github.io/space-scape";
+const SITE_URL = "https://spacescape.co.in";
 const DESCRIPTION =
   "Space Scape designs the experience of architecture. Photoreal imagery and cinematic visualisation for architecture, interiors and development.";
 

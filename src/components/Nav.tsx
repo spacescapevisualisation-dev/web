@@ -5,9 +5,14 @@ import { useEffect, useRef, useState } from "react";
 function scrollTo(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
-  const lenis = (window as unknown as { __lenis?: { scrollTo: (t: HTMLElement, o?: object) => void } }).__lenis;
-  if (lenis) lenis.scrollTo(el, { offset: 0, duration: 1.4 });
-  else el.scrollIntoView({ behavior: "smooth" });
+
+  const bar = document.querySelector(".catbar") as HTMLElement | null;
+  const barHeight = bar?.getBoundingClientRect().height ?? 0;
+  const mobileStrip = window.innerWidth <= 860 ? 46 : 0;
+  const offset = Math.ceil(Math.max(barHeight, mobileStrip) + 18);
+  const top = window.scrollY + el.getBoundingClientRect().top - offset;
+
+  window.scrollTo({ top, behavior: "smooth" });
 }
 
 /**
@@ -39,6 +44,7 @@ export default function Nav() {
 
   const links: [string, string][] = [
     ["Projects", "work"],
+    ["Careers", "careers"],
     ["Contact", "contact"],
   ];
 
@@ -53,11 +59,12 @@ export default function Nav() {
         aria-expanded={open}
         aria-label={open ? "Close menu" : "Open menu"}
       >
-        SS<i>/</i>
+        <i aria-hidden><b>•</b><b>•</b><b>•</b></i><span>spacescape</span>
       </button>
 
+      <a className="contact-top mono" href="mailto:spacescapevisualisations@gmail.com?subject=Project%20Inquiry%20%E2%80%94%20Space%20Scape">Contact us</a>
+
       <nav ref={panel} className={`side ${open ? "open" : ""}`} aria-hidden={!open} aria-label="Site menu">
-        <span className="side-mark display">SPACE SCAPE</span>
         {links.map(([label, id], i) => (
           <button
             key={id}
@@ -78,9 +85,9 @@ export default function Nav() {
           data-cursor
           tabIndex={open ? 0 : -1}
           style={{ transitionDelay: open ? "0.26s" : "0s" }}
-          href="mailto:studio@spacescape.com"
+          href="mailto:spacescapevisualisations@gmail.com?subject=Project%20Inquiry%20%E2%80%94%20Space%20Scape"
         >
-          studio@spacescape.com
+          spacescapevisualisations@gmail.com
         </a>
         <span className="side-foot mono">Architectural Visualisation · Pune</span>
       </nav>
@@ -95,9 +102,25 @@ export default function Nav() {
           font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink);
           transition: opacity .3s;
         }
-        .logo i { font-style: normal; font-weight: 300; opacity: .4; transition: transform .5s cubic-bezier(.16,1,.3,1); display: inline-block; }
-        .logo.open i { transform: rotate(90deg); }
+        .logo { display: flex; align-items: center; gap: 7px; }
+        .logo i { display: flex; gap: 2px; font-style: normal; font-size: 13px; font-weight: 500; line-height: 1; }
+        .logo i b { font: inherit; opacity: .25; animation: logo-dot 1.35s ease-in-out infinite; }
+        .logo i b:nth-child(2) { animation-delay: .18s; }
+        .logo i b:nth-child(3) { animation-delay: .36s; }
+        .logo.open i { gap: 1px; }
+        @keyframes logo-dot {
+          0%, 55%, 100% { opacity: .2; transform: scale(.78); }
+          25% { opacity: 1; transform: scale(1); }
+        }
         .logo:hover { opacity: .6; }
+        .contact-top {
+          position: fixed; top: 0; right: 0; z-index: 7100;
+          display: flex; align-items: center;
+          min-height: 46px; padding: 0 clamp(16px, 2.4vw, 28px);
+          border: 0; background: transparent; color: var(--ink);
+          font-size: 8.5px; transition: opacity .3s;
+        }
+        .contact-top:hover { opacity: .55; }
 
         .side {
           position: fixed; top: 0; bottom: 0; left: 0; z-index: 7000;
@@ -123,6 +146,9 @@ export default function Nav() {
         .side-mail { font-size: clamp(14px, 1.4vw, 17px); text-transform: none; margin-top: 18px; }
         .side-foot { position: absolute; bottom: 26px; left: clamp(22px, 4vw, 40px); font-size: 8.5px; color: var(--faint); }
         .side-veil { position: fixed; inset: 0; z-index: 6900; background: rgba(0,0,0,0.08); border: none; }
+        @media (max-width: 860px) {
+          .contact-top { padding: 0 14px; font-size: 8px; }
+        }
       `}</style>
     </>
   );

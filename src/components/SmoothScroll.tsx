@@ -20,12 +20,12 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     if (reduce) return;
 
     const lenis = new Lenis({
-      duration: 1.15,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      lerp: 0.09,
-      wheelMultiplier: 1.05,
+      // A large travel target with a low interpolation rate creates BIG's
+      // distinctive slow pick-up and long coast from a short wheel gesture.
+      lerp: 0.055,
+      wheelMultiplier: 2.6,
       smoothWheel: true,
-      touchMultiplier: 1.8,
+      touchMultiplier: 1.65,
     });
 
     lenis.on("scroll", ScrollTrigger.update);

@@ -32,7 +32,7 @@ export default function Contact() {
     return () => ctx.revert();
   }, []);
 
-  const title = "Let's make the first image.".split(" ");
+  const title = "See it before it’s built!".split(" ");
 
   return (
     <section id="contact" ref={root} className="ct">
@@ -48,19 +48,19 @@ export default function Contact() {
       </h2>
 
       <div className="ct-grid">
-        <a className="ct-item" data-cursor href="mailto:studio@spacescape.com">
+        <a className="ct-item" data-cursor href="mailto:spacescapevisualisations@gmail.com?subject=Project%20Inquiry%20%E2%80%94%20Space%20Scape">
           <span className="mono">Email</span>
-          <b>studio@spacescape.com</b>
+          <b>spacescapevisualisations@gmail.com</b>
         </a>
         <a
           className="ct-item"
           data-cursor
-          href="https://instagram.com/spacescape.viz"
+          href="https://www.instagram.com/spacescapevisualisations?igsh=MXE5emU3eGg1M3lrdQ=="
           target="_blank"
           rel="noopener noreferrer"
         >
           <span className="mono">Instagram</span>
-          <b>@spacescape.viz</b>
+          <b>@spacescapevisualisations</b>
         </a>
         <div className="ct-item">
           <span className="mono">Location</span>
@@ -68,14 +68,14 @@ export default function Contact() {
         </div>
       </div>
 
-      <a className="ct-cta" data-cursor data-cursor-label="Send" href="mailto:studio@spacescape.com">
+      <a className="ct-cta" data-cursor data-cursor-label="Send" href="mailto:spacescapevisualisations@gmail.com?subject=Project%20Inquiry%20%E2%80%94%20Space%20Scape">
         <span>Start an Inquiry</span>
         <i />
       </a>
 
       <footer className="ct-foot">
         <span className="mono">Space Scape Visualisations</span>
-        <span className="mono ct-foot-mid">Architectural Imagery · Est 2019</span>
+        <span className="mono ct-foot-mid">Architectural Imagery · Est 2025</span>
         <span className="mono">© {new Date().getFullYear()}</span>
       </footer>
 
@@ -83,6 +83,8 @@ export default function Contact() {
         .ct { max-width: 1500px; margin: 0 auto; padding: clamp(120px, 22vh, 260px) clamp(18px, 4vw, 56px) 0; }
         .ct-kick { font-size: 10px; color: var(--bronze); }
         .ct-title { font-size: clamp(44px, 9.5vw, 150px); margin-top: 22px; color: var(--ink); line-height: 0.94; }
+        .ct-title .word-mask { display: inline-block; margin-right: 0.2em; white-space: nowrap; }
+        .ct-title .word-mask:last-child { margin-right: 0; }
         .ct-grid { display: flex; flex-wrap: wrap; gap: clamp(28px, 6vw, 96px); margin-top: clamp(50px, 9vh, 96px); }
         .ct-item { display: flex; flex-direction: column; gap: 10px; }
         .ct-item span { font-size: 9px; color: var(--mut); }

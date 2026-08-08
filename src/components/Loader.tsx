@@ -22,6 +22,9 @@ export default function Loader() {
     } catch {
       /* storage unavailable — just play the intro */
     }
+    // Always play the homepage intro. Skipping it after SSR produced a
+    // one-frame black flash on refresh instead of a deliberate opening.
+    seen = false;
     if (seen) {
       const raf = requestAnimationFrame(() => setGone(true));
       return () => cancelAnimationFrame(raf);
@@ -40,7 +43,7 @@ export default function Loader() {
       });
       tl.from(".ld-mark span", { yPercent: 130, duration: 0.85, stagger: 0.045, ease: "power4.out" })
         .to(".ld-sub", { opacity: 1, duration: 0.4 }, "-=0.3")
-        .to(".ld-mark", { scale: 0.6, duration: 0.8, ease: "power3.inOut" }, "+=0.5")
+        .to(".ld-mark", { scale: 0.6, duration: 0.8, ease: "power3.inOut" }, "+=0.9")
         .to(".ld-sub", { opacity: 0, duration: 0.3 }, "<")
         .to(root.current, { yPercent: -100, duration: 0.9, ease: "power4.inOut" }, "-=0.35");
     }, root);
