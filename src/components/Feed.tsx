@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import Link from "next/link";
 import { PROJECTS, projectSlug, type Project } from "@/lib/projects";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -140,7 +139,7 @@ function ProjectRow({
       // Move the gallery just far enough to crop the cover and reveal the
       // beginning of the next panel. That visual interruption makes the
       // horizontal direction obvious without taking control away for long.
-      const SLIDE = 72;
+      const SLIDE = 128;
       timer = setTimeout(() => {
         if (el.scrollLeft > 4) return; // already exploring on their own
         rest = SLIDE;
@@ -306,14 +305,6 @@ function ProjectRow({
         </div>
 
         <div className="p-cell c-end">
-          <Link
-            className="c-project mono"
-            href={`/projects/${projectSlug(p)}`}
-            data-cursor
-            data-cursor-label="View"
-          >
-            View full project <span aria-hidden>→</span>
-          </Link>
           <button className="c-close mono" data-cursor onClick={onToggle}>Close ✕</button>
         </div>
       </div>
@@ -730,7 +721,7 @@ export default function Feed({ projects = PROJECTS }: { projects?: Project[] }) 
         .p-item.open.project-krushna-kunj .c-photo-tertiary { width: calc(var(--ch) * .75); }
         .p-item.open .c-text  { width: min(74vw, 370px); }
         .p-item.open .c-plan  { width: calc(var(--ch) * 1.3); }
-        .p-item.open .c-end   { width: min(76vw, 280px); }
+        .p-item.open .c-end   { width: 86px; }
 
         .c-photo .scene { position: absolute; inset: -1px; }
         .c-plan .sp { position: absolute; inset: 0; }
@@ -772,12 +763,14 @@ export default function Feed({ projects = PROJECTS }: { projects?: Project[] }) 
           .projects-scaler:has(.p-item.open) { transform: scale(1); }
         }
 
-        .c-end { display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; background: #000; color: #fff; }
-        .c-project { flex: 1; display: flex; flex-direction: column; justify-content: space-between; padding: 24px; font-size: 10px; }
-        .c-project span { align-self: flex-end; font-family: var(--font-display); font-size: 42px; font-weight: 300; transition: transform .35s ease; }
-        .c-project:hover span { transform: translateX(7px); }
-        .c-close { background: none; border: 1px solid var(--line); padding: 12px 10px; font-size: 9px; color: var(--ink); white-space: nowrap; writing-mode: vertical-rl; }
-        .c-end .c-close { align-self: flex-end; margin: 0 16px 16px 0; color: #fff; border-color: rgba(255,255,255,.35); writing-mode: horizontal-tb; }
+        .c-end { display: flex; align-items: flex-start; background: transparent; color: var(--ink); }
+        .c-end .c-close {
+          width: auto; height: auto; padding: 10px 12px;
+          background: none; border: 1px solid var(--line); color: var(--ink); font-size: 8px;
+          white-space: nowrap; writing-mode: horizontal-tb;
+          transition: opacity .3s ease;
+        }
+        .c-end .c-close:hover { opacity: .5; }
 
         /* ---------- site plan ---------- */
         .sp { position: relative; background: #f1f0ec; overflow: hidden; }
