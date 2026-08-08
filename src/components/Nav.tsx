@@ -59,7 +59,7 @@ export default function Nav() {
         aria-expanded={open}
         aria-label={open ? "Close menu" : "Open menu"}
       >
-        <i aria-hidden><b>•</b><b>•</b><b>•</b></i><span>spacescape</span>
+        <i className="logo-lines" aria-hidden><b /><b /><b /></i><span>spacescape</span>
       </button>
 
       <a className="contact-top mono" href="mailto:spacescapevisualisations@gmail.com?subject=Project%20Inquiry%20%E2%80%94%20Space%20Scape">Contact us</a>
@@ -103,14 +103,21 @@ export default function Nav() {
           transition: opacity .3s;
         }
         .logo { display: flex; align-items: center; gap: 7px; }
-        .logo i { display: flex; gap: 2px; font-style: normal; font-size: 13px; font-weight: 500; line-height: 1; }
-        .logo i b { font: inherit; opacity: .25; animation: logo-dot 1.35s ease-in-out infinite; }
+        .logo-lines { display: flex; flex-direction: column; justify-content: center; gap: 2px; width: 13px; height: 14px; }
+        .logo-lines b {
+          display: block; width: 12px; height: 2px; flex: none;
+          background: currentColor; opacity: .22; transform: scaleX(.45);
+          transform-origin: left center;
+          animation: logo-line 1.35s cubic-bezier(.16,1,.3,1) infinite;
+        }
         .logo i b:nth-child(2) { animation-delay: .18s; }
         .logo i b:nth-child(3) { animation-delay: .36s; }
-        .logo.open i { gap: 1px; }
-        @keyframes logo-dot {
-          0%, 55%, 100% { opacity: .2; transform: scale(.78); }
-          25% { opacity: 1; transform: scale(1); }
+        @keyframes logo-line {
+          0%, 55%, 100% { opacity: .22; transform: scaleX(.45); }
+          25% { opacity: 1; transform: scaleX(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .logo-lines b { animation: none; opacity: 1; transform: none; }
         }
         .logo:hover { opacity: .6; }
         .contact-top {

@@ -137,7 +137,10 @@ function ProjectRow({
     if (touch) {
       // once the unfold settles, ease the strip a little way in and leave it
       // there — the cut-off panel edge is the invitation to keep going
-      const SLIDE = 0;
+      // Move the gallery just far enough to crop the cover and reveal the
+      // beginning of the next panel. That visual interruption makes the
+      // horizontal direction obvious without taking control away for long.
+      const SLIDE = 72;
       timer = setTimeout(() => {
         if (el.scrollLeft > 4) return; // already exploring on their own
         rest = SLIDE;
@@ -152,7 +155,7 @@ function ProjectRow({
         const t0 = performance.now();
         const tick = (now: number) => {
           if (!nudging) return;
-          const p = Math.min(1, (now - t0) / 800);
+          const p = Math.min(1, (now - t0) / 680);
           el.scrollLeft = SLIDE * (1 - Math.pow(1 - p, 3)); // ease-out, no return
           if (p >= 1) {
             nudging = false;
@@ -161,7 +164,7 @@ function ProjectRow({
           raf = requestAnimationFrame(tick);
         };
         raf = requestAnimationFrame(tick);
-      }, 950);
+      }, 880);
       el.addEventListener("pointerdown", stopNudge, { passive: true });
       el.addEventListener("touchstart", stopNudge, { passive: true });
     }
@@ -400,15 +403,18 @@ export default function Feed({ projects = PROJECTS }: { projects?: Project[] }) 
   /* ------- big.dk motion scroll: the grid breathes out with velocity ------- */
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let scale = window.innerWidth <= 720 ? 1 : window.innerWidth <= 1024 ? 0.86 : 0.76;
+    const restingScale = () => window.innerWidth <= 720 ? 0.94 : window.innerWidth <= 1024 ? 0.86 : 0.76;
+    let scale = restingScale();
     const tick = () => {
       const el = scaler.current;
       if (!el) return;
       const v = Math.max(Math.abs(getLenis()?.velocity ?? 0), wheelImpulse.current);
       wheelImpulse.current *= 0.97;
-      const rest = window.innerWidth <= 720 ? 1 : window.innerWidth <= 1024 ? 0.86 : 0.76;
+      const rest = restingScale();
       const compression = window.innerWidth <= 720
-        ? 0
+        ? isProjectOpen.current
+          ? Math.min(v * 0.0012, 0.014)
+          : Math.min(v * 0.0032, 0.042)
         : isProjectOpen.current
           ? Math.min(v * 0.0018, 0.025)
           : Math.min(v * 0.0068, 0.095);
@@ -795,7 +801,7 @@ export default function Feed({ projects = PROJECTS }: { projects?: Project[] }) 
         .sp-tag { position: absolute; left: 14px; bottom: 12px; font-size: 9px; color: #6a6a6a; background: rgba(255,255,255,0.72); padding: 5px 9px; }
 
         @media (max-width: 720px) {
-          .projects-scaler { transform: none; }
+          .projects-scaler { transform: scale(.94); }
           /* phone covers: fixed 90vw width, height follows the aspect (capped) */
           .p-item { --ch: min(calc(90vw / var(--ar)), 56vh); }
           .p-item.open { --ch: clamp(280px, 48vh, 520px); }
