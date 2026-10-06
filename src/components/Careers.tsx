@@ -1,28 +1,13 @@
 "use client";
 
+import { site, careersHref } from "@/lib/site";
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const openings = [
-  {
-    title: "Senior Visualisation Artist",
-    type: "Full-time · Remote / Hybrid",
-    blurb: "Lead cinematic architectural imagery, shape the visual language, and collaborate closely with design teams.",
-  },
-  {
-    title: "Junior 3D Artist",
-    type: "Full-time · Pune",
-    blurb: "Support high-end rendering pipelines, materials, and scene development for residential and mixed-use projects.",
-  },
-  {
-    title: "Motion Designer",
-    type: "Contract · Remote",
-    blurb: "Create motion-led presentations, short-form reels, and immersive visual stories for architecture and development.",
-  },
-];
+const openings = site.openings;
 
 export default function Careers() {
   const root = useRef<HTMLDivElement>(null);
@@ -78,8 +63,8 @@ export default function Careers() {
         ))}
       </div>
 
-      <a className="careers-cta" href="mailto:careers.spacescape@gmail.com?subject=Career%20Application%20%E2%80%94%20Space%20Scape">
-        Have it in you? Mail us
+      <a className="careers-cta" href={careersHref}>
+        {site.careersButton}
       </a>
 
       <style>{`

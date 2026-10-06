@@ -1,48 +1,81 @@
-import { PROJECTS, projectSlug, type Project } from "@/lib/projects";
-import { sanityClient } from "@/sanity/client";
-import { projectsQuery } from "@/sanity/queries";
+import fs from "node:fs";
+import path from "node:path";
+import { projectSlug, type Project } from "@/lib/projects";
 
-type CmsProject = Partial<Project> & { slug?: string };
-
+/**
+ * Projects live as one JSON file each in /content/projects, edited through
+ * Decap CMS at /admin. This runs at build time only (static export).
+ */
+const PROJECTS_DIR = path.join(process.cwd(), "content", "projects");
 const sceneKeys = ["s1", "s4", "s3", "s2", "s5", "s6"];
 
-function normalize(project: CmsProject, index: number): Project | null {
-  if (!project.name || !project.location || !project.year) return null;
-  const fallback = PROJECTS.find((item) => projectSlug(item) === project.slug) || PROJECTS[index % PROJECTS.length];
+type ProjectFile = Partial<Project> & { draft?: boolean };
+
+const clean = (value?: string) => (typeof value === "string" && value.trim() ? value.trim() : undefined);
+
+function normalize(data: ProjectFile, fileSlug: string, index: number): Project | null {
+  if (!clean(data.name) || data.draft) return null;
+  const gallery = (data.additionalImageUrls || [])
+    .map((item) => (typeof item === "string" ? item : (item as { image?: string })?.image))
+    .filter((item): item is string => Boolean(clean(item)));
+
   return {
-    ...fallback,
-    ...project,
-    no: String(project.no || index + 1).padStart(2, "0"),
-    scene: project.scene || sceneKeys[index % sceneKeys.length],
-    sceneB: project.sceneB || sceneKeys[(index + 3) % sceneKeys.length],
-    align: project.align || "left",
-    span: project.span || "std",
-    featured: project.featured ?? false,
+    ...data,
+    slug: clean(data.slug) || fileSlug,
+    name: data.name!.trim(),
+    location: data.location || "",
+    year: String(data.year ?? ""),
+    category: data.category || "",
+    architect: data.architect || "",
+    developer: clean(data.developer),
+    typology: data.typology || "Residential",
+    discipline: data.discipline || "Exterior",
+    status: data.status || "Completed",
+    size: data.size || "",
+    desc: data.desc || "",
+    desc2: data.desc2 || data.desc || "",
+    featured: data.featured ?? true,
+    scene: data.scene || sceneKeys[index % sceneKeys.length],
+    sceneB: data.sceneB || sceneKeys[(index + 3) % sceneKeys.length],
+    mainImageUrl: clean(data.mainImageUrl),
+    secondaryImageUrl: clean(data.secondaryImageUrl),
+    tertiaryImageUrl: clean(data.tertiaryImageUrl),
+    quaternaryImageUrl: clean(data.quaternaryImageUrl),
+    additionalImageUrls: gallery.length ? gallery : undefined,
+    align: data.align || "left",
+    span: data.span || "std",
+    no: "",
   };
 }
 
-function mergeWithBundled(cmsProjects: Project[]): Project[] {
-  if (!cmsProjects.length) return PROJECTS;
-  const cmsBySlug = new Map(cmsProjects.map((project) => [projectSlug(project), project]));
-  const migrated = PROJECTS.map((project) => cmsBySlug.get(projectSlug(project)) || project);
-  const additions = cmsProjects.filter(
-    (project) => !PROJECTS.some((fallback) => projectSlug(fallback) === projectSlug(project)),
-  );
-  return [...migrated, ...additions].sort((a, b) => {
-    const fallbackA = PROJECTS.findIndex((item) => projectSlug(item) === projectSlug(a));
-    const fallbackB = PROJECTS.findIndex((item) => projectSlug(item) === projectSlug(b));
-    return (a.order ?? (fallbackA < 0 ? 999 : fallbackA)) - (b.order ?? (fallbackB < 0 ? 999 : fallbackB));
-  });
-}
+let cache: Project[] | null = null;
 
 export async function getProjects(): Promise<Project[]> {
-  if (!sanityClient) return PROJECTS;
-  try {
-    const result = await sanityClient.fetch<CmsProject[]>(projectsQuery);
-    const sanityProjects = result.map(normalize).filter((project): project is Project => Boolean(project));
-    return mergeWithBundled(sanityProjects);
-  } catch (error) {
-    console.warn("Sanity content unavailable; using bundled projects.", error);
-    return PROJECTS;
-  }
+  if (cache) return cache;
+  const files = fs.existsSync(PROJECTS_DIR)
+    ? fs.readdirSync(PROJECTS_DIR).filter((file) => file.endsWith(".json")).sort()
+    : [];
+
+  const projects = files
+    .map((file, index) => {
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(PROJECTS_DIR, file), "utf8")) as ProjectFile;
+        return normalize(data, file.replace(/\.json$/, ""), index);
+      } catch (error) {
+        console.warn(`Skipping unreadable project file ${file}`, error);
+        return null;
+      }
+    })
+    .filter((project): project is Project => Boolean(project))
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || a.name.localeCompare(b.name));
+
+  // Unique URLs: if two entries collide, the later one gets a numeric suffix.
+  const seen = new Set<string>();
+  cache = projects.map((project, i) => {
+    let slug = projectSlug(project);
+    for (let n = 2; seen.has(slug); n++) slug = `${projectSlug(project)}-${n}`;
+    seen.add(slug);
+    return { ...project, slug, no: String(i + 1).padStart(2, "0") };
+  });
+  return cache;
 }

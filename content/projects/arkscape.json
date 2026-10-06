@@ -1,0 +1,23 @@
+{
+  "slug": "arkscape",
+  "order": 5,
+  "name": "ArkScape",
+  "location": "Pune, India",
+  "year": "2025",
+  "category": "Residential Architecture",
+  "architect": "Rohit Kawade",
+  "typology": "Residential",
+  "discipline": "Exterior",
+  "status": "Completed",
+  "size": "Urban residence",
+  "desc": "A refined urban residence balancing classical proportions with clean contemporary detailing and planted outdoor spaces.",
+  "desc2": "ArkScape combines a composed, symmetrical street presence with deep balconies, tall glazing and carefully integrated planting. Subtle mouldings and a warm neutral palette lend the façade a timeless character, while generous openings and rooftop terraces bring light, greenery and openness into the compact urban residence.",
+  "featured": true,
+  "scene": "s5",
+  "sceneB": "s3",
+  "mainImageUrl": "/project-images/arkscape/angular.webp",
+  "secondaryImageUrl": "/project-images/arkscape/front.webp",
+  "imageAlt": "Angular view of ArkScape with planted balconies, classical proportions and a warm neutral façade",
+  "align": "right",
+  "span": "tall"
+}

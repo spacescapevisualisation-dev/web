@@ -1,50 +1,74 @@
-# Space Scape project editor
+# Space Scape content editor (Decap CMS)
 
-The website now reads project content from Sanity and falls back to the six
-bundled projects until the CMS is connected. Existing projects can therefore
-be migrated one at a time without disappearing from the site.
+The site's content lives in this repository as plain JSON files, and
+[Decap CMS](https://decapcms.org) gives non-developers a form-based editor for
+them at **https://spacescape.co.in/admin/**.
 
-## One-time setup
+| What | File(s) | Editor section |
+| --- | --- | --- |
+| Portfolio projects (one file each) | `content/projects/*.json` | **Projects** |
+| Contact email, Instagram, location, careers email, job openings | `content/settings/site.json` | **Site settings → Contact, email & careers** |
+| Uploaded images | `public/project-images/uploads/` | **Media** |
 
-1. Create a free project at [sanity.io/manage](https://sanity.io/manage).
-2. Copy `.env.example` to `.env.local` and replace `your_project_id` with the
-   project ID shown by Sanity. Keep the dataset as `production`.
-3. Run `npm run studio`. The project editor opens at `http://localhost:3333`.
-4. Run `npm run studio` to test the editor locally. For the custom production
-   domain, follow the Vercel steps in `DEPLOYMENT.md`.
-5. Add `NEXT_PUBLIC_SANITY_PROJECT_ID` as a GitHub Actions repository secret.
-   Optionally add `NEXT_PUBLIC_SANITY_DATASET` as a repository variable; it
-   defaults to `production`.
+Every **Publish** in the editor is a Git commit to `main`. That push runs the
+existing GitHub Pages workflow, so the live site updates in ~2 minutes.
 
-## Editor workflow
+## Editing
 
-1. Open the hosted Studio and choose **Projects**.
-2. Select an existing project or click **Create**.
-3. Fill in the project details and upload the two required images.
-4. Use **Generate** beside Page URL, then click **Publish**.
+- **Add a project:** Projects → **+ Project** → fill in the form, choose a main
+  and second image (upload from your computer), then **Publish → Publish now**.
+- **Edit a project:** click it in the list, change anything, Publish.
+- **Order:** "Display order" — lower numbers show first (0 = top). Project
+  numbers (01, 02…) are assigned automatically from this order.
+- **Hide without deleting:** tick "Hide from website (draft)".
+- **Delete:** open the project → **Delete entry**.
+- **Change the email / Instagram / jobs:** Site settings → Contact, email & careers.
 
-The URL is generated as `/projects/project-name/`. A CMS project replaces a
-bundled project when their slugs match; entirely new slugs add new projects.
+Keep images web-sized (≈2400px wide, WebP or JPG under ~1 MB) — large uploads
+slow the site and the repository.
 
-## Automatic GitHub Pages publishing
+## One-time setup: GitHub login (≈10 minutes)
 
-The deployment workflow accepts a `sanity-publish` repository dispatch event.
-Create a Sanity webhook that sends that event to GitHub whenever a project is
-created, updated, or deleted. The webhook should target:
+GitHub Pages can't run the login handshake, so a tiny login service in `/api`
+runs on Vercel (free plan).
 
-`https://api.github.com/repos/OWNER/REPOSITORY/dispatches`
+1. **Create a GitHub OAuth App** — GitHub → Settings → Developer settings →
+   OAuth Apps → New OAuth App (create it under the
+   `spacescapevisualisation-dev` organisation if possible):
+   - Homepage URL: `https://spacescape.co.in`
+   - Authorization callback URL: `https://cms.spacescape.co.in/api/callback`
+   - Copy the **Client ID** and generate a **Client secret**.
+2. **Deploy the login service on Vercel** — import this repository. Vercel reads
+   `vercel.json` (no build; it only serves `/api/auth` and `/api/callback`).
+   Under Settings → Environment Variables add:
+   - `OAUTH_GITHUB_CLIENT_ID` = Client ID
+   - `OAUTH_GITHUB_CLIENT_SECRET` = Client secret
+   - `CMS_ALLOWED_ORIGINS` = `https://spacescape.co.in,https://www.spacescape.co.in,http://localhost:3000` (optional; this is the default)
 
-Use method `POST`, include GitHub API authentication, and send:
+   Redeploy after adding them.
+3. **Domain** — add `cms.spacescape.co.in` in Vercel → Settings → Domains and
+   create the CNAME Vercel shows you in GoDaddy DNS (see `DEPLOYMENT.md`).
+   If you'd rather skip the custom domain, put the `*.vercel.app` URL in
+   `base_url` in `public/admin/config.yml` and in the OAuth App's callback URL.
+4. **Who can edit** — anyone with **write access** to the GitHub repository.
+   Add editors as collaborators (Repo → Settings → Collaborators). They log in
+   at `/admin/` with "Login with GitHub".
 
-```json
-{ "event_type": "sanity-publish" }
+## Working locally (no login needed)
+
+```bash
+npm run cms   # terminal 1 — local Decap backend that writes straight to your files
+npm run dev   # terminal 2
 ```
 
-Until that webhook is configured, an administrator can publish CMS changes by
-running the existing GitHub Actions workflow manually.
+Open http://localhost:3000/admin/. Changes are saved to your working copy;
+commit and push them yourself.
 
-## Custom production domain
+## For developers
 
-The production editor is configured to build as a standalone static app for
-`https://cms.spacescape.co.in`. Follow `DEPLOYMENT.md` to deploy it to Vercel,
-add the GoDaddy DNS record, enable Sanity CORS, and invite authenticated users.
+- Form fields: `public/admin/config.yml`. If you add a field, also add it to
+  the `Project` type in `src/lib/projects.ts`.
+- Projects are read at build time by `src/lib/project-data.ts`; settings are
+  imported in `src/lib/site.ts`.
+- The Decap script is pinned in `public/admin/index.html`; bump the version
+  there to upgrade.

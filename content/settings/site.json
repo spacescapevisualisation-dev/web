@@ -1,0 +1,30 @@
+{
+  "contactEmail": "spacescapevisualisations@gmail.com",
+  "inquirySubject": "Project Inquiry — Space Scape",
+  "instagramHandle": "@spacescapevisualisations",
+  "instagramUrl": "https://www.instagram.com/spacescapevisualisations?igsh=MXE5emU3eGg1M3lrdQ==",
+  "location": "Pune · India",
+  "menuFooter": "Architectural Visualisation · Pune",
+  "contactTitle": "See it before it’s built!",
+  "contactButton": "Start an Inquiry",
+  "careersEmail": "careers.spacescape@gmail.com",
+  "careersSubject": "Career Application — Space Scape",
+  "careersButton": "Have it in you? Mail us",
+  "openings": [
+    {
+      "title": "Senior Visualisation Artist",
+      "type": "Full-time · Remote / Hybrid",
+      "blurb": "Lead cinematic architectural imagery, shape the visual language, and collaborate closely with design teams."
+    },
+    {
+      "title": "Junior 3D Artist",
+      "type": "Full-time · Pune",
+      "blurb": "Support high-end rendering pipelines, materials, and scene development for residential and mixed-use projects."
+    },
+    {
+      "title": "Motion Designer",
+      "type": "Contract · Remote",
+      "blurb": "Create motion-led presentations, short-form reels, and immersive visual stories for architecture and development."
+    }
+  ]
+}

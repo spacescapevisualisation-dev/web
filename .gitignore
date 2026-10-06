@@ -38,8 +38,6 @@ yarn-error.log*
 # vercel
 .vercel
 
-# local Sanity runtime cache
-/.sanity/
 
 # typescript
 *.tsbuildinfo

@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run studio:build",
-  "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "framework": null,
+  "buildCommand": "echo 'GitHub login service for Decap CMS — website is on GitHub Pages'",
+  "outputDirectory": "public",
+  "redirects": [
+    { "source": "/", "destination": "https://spacescape.co.in/admin/", "permanent": false }
   ]
 }

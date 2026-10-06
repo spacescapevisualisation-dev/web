@@ -1,5 +1,6 @@
 "use client";
 
+import { site, inquiryHref } from "@/lib/site";
 import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -32,7 +33,7 @@ export default function Contact() {
     return () => ctx.revert();
   }, []);
 
-  const title = "See it before it’s built!".split(" ");
+  const title = site.contactTitle.split(" ");
 
   return (
     <section id="contact" ref={root} className="ct">
@@ -48,28 +49,28 @@ export default function Contact() {
       </h2>
 
       <div className="ct-grid">
-        <a className="ct-item" data-cursor href="mailto:spacescapevisualisations@gmail.com?subject=Project%20Inquiry%20%E2%80%94%20Space%20Scape">
+        <a className="ct-item" data-cursor href={inquiryHref}>
           <span className="mono">Email</span>
-          <b>spacescapevisualisations@gmail.com</b>
+          <b>{site.contactEmail}</b>
         </a>
         <a
           className="ct-item"
           data-cursor
-          href="https://www.instagram.com/spacescapevisualisations?igsh=MXE5emU3eGg1M3lrdQ=="
+          href={site.instagramUrl}
           target="_blank"
           rel="noopener noreferrer"
         >
           <span className="mono">Instagram</span>
-          <b>@spacescapevisualisations</b>
+          <b>{site.instagramHandle}</b>
         </a>
         <div className="ct-item">
           <span className="mono">Location</span>
-          <b>Pune · India</b>
+          <b>{site.location}</b>
         </div>
       </div>
 
-      <a className="ct-cta" data-cursor data-cursor-label="Send" href="mailto:spacescapevisualisations@gmail.com?subject=Project%20Inquiry%20%E2%80%94%20Space%20Scape">
-        <span>Start an Inquiry</span>
+      <a className="ct-cta" data-cursor data-cursor-label="Send" href={inquiryHref}>
+        <span>{site.contactButton}</span>
         <i />
       </a>
 
