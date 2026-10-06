@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "echo 'GitHub login service for Decap CMS — website is on GitHub Pages'",
+  "buildCommand": "echo 'Hosts the Decap CMS editor at cms.spacescape.co.in — the website itself is on GitHub Pages'",
   "outputDirectory": "public",
   "redirects": [
-    { "source": "/", "destination": "https://spacescape.co.in/admin/", "permanent": false }
+    { "source": "/", "destination": "/admin/", "permanent": false }
   ]
 }
