@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { PROJECTS, projectSlug, type Project } from "@/lib/projects";
+import { projectSlug, type Project } from "@/lib/projects";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -313,7 +313,7 @@ function ProjectRow({
   );
 }
 
-export default function Feed({ projects = PROJECTS }: { projects?: Project[] }) {
+export default function Feed({ projects }: { projects: Project[] }) {
   const root = useRef<HTMLDivElement>(null);
   const scaler = useRef<HTMLDivElement>(null);
   const [openNo, setOpenNo] = useState<string | null>(null);

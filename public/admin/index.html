@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Space Scape · Content Manager</title>
+  </head>
+  <body>
+    <script src="https://unpkg.com/decap-cms@3.16.3/dist/decap-cms.js"></script>
+    <script>
+      // Show project images in the editor preview: paths are stored as
+      // "/project-images/...", which resolve against this site.
+      CMS.registerPreviewStyle("/admin/preview.css");
+      (function () {
+      const h = window.h;
+      const ProjectPreview = ({ entry, getAsset }) => {
+        const d = (k) => entry.getIn(["data", k]);
+        const img = (k) => (d(k) ? h("img", { src: getAsset(d(k)).toString() }) : null);
+        const list = d("additionalImageUrls");
+        const gallery = (list && list.toArray ? list.toArray() : []).map((src, i) =>
+          h("img", { key: i, src: getAsset(src).toString() }),
+        );
+        return h(
+          "article",
+          { className: "pv" },
+          h("p", { className: "kick" }, `${d("category") || ""} · ${d("discipline") || ""}`),
+          h("h1", {}, d("name") || "Untitled project"),
+          h("p", { className: "meta" }, `${d("location") || ""} — ${d("year") || ""}`),
+          img("mainImageUrl"),
+          h("p", { className: "lede" }, d("desc")),
+          h("p", {}, d("desc2")),
+          h("div", { className: "grid" }, img("secondaryImageUrl"), img("tertiaryImageUrl"), img("quaternaryImageUrl"), ...gallery),
+        );
+      };
+      CMS.registerPreviewTemplate("projects", ProjectPreview);
+      })();
+    </script>
+  </body>
+</html>

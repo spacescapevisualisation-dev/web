@@ -1,5 +1,6 @@
 "use client";
 
+import { site, inquiryHref } from "@/lib/site";
 import { useEffect, useRef, useState } from "react";
 
 function scrollTo(id: string) {
@@ -62,7 +63,7 @@ export default function Nav() {
         <i className="logo-lines" aria-hidden><b /><b /><b /></i><span>spacescape</span>
       </button>
 
-      <a className="contact-top mono" href="mailto:spacescapevisualisations@gmail.com?subject=Project%20Inquiry%20%E2%80%94%20Space%20Scape">Contact us</a>
+      <a className="contact-top mono" href={inquiryHref}>Contact us</a>
 
       <nav ref={panel} className={`side ${open ? "open" : ""}`} aria-hidden={!open} aria-label="Site menu">
         {links.map(([label, id], i) => (
@@ -85,11 +86,11 @@ export default function Nav() {
           data-cursor
           tabIndex={open ? 0 : -1}
           style={{ transitionDelay: open ? "0.26s" : "0s" }}
-          href="mailto:spacescapevisualisations@gmail.com?subject=Project%20Inquiry%20%E2%80%94%20Space%20Scape"
+          href={inquiryHref}
         >
-          spacescapevisualisations@gmail.com
+          {site.contactEmail}
         </a>
-        <span className="side-foot mono">Architectural Visualisation · Pune</span>
+        <span className="side-foot mono">{site.menuFooter}</span>
       </nav>
 
       {open && <button className="side-veil" aria-label="Close menu" onClick={() => setOpen(false)} />}

@@ -1,0 +1,29 @@
+{
+  "slug": "rowhouse-community",
+  "order": 2,
+  "name": "Rowhouse Community",
+  "location": "Pune, India",
+  "year": "2025",
+  "category": "Residential Architecture",
+  "architect": "Cubix",
+  "developer": "Bhandari Associates",
+  "typology": "Residential",
+  "discipline": "Exterior",
+  "status": "Completed",
+  "size": "Rowhouse community",
+  "desc": "A contemporary housing development shaped around private living, landscaped open spaces and family-oriented amenities.",
+  "desc2": "Rowhouse Community is a contemporary housing development designed around private living, landscaped open spaces and family-oriented amenities. Clean geometric façades, balconies, shaded outdoor areas, gardens and dedicated play zones create a balanced residential environment with a strong focus on community and everyday comfort.",
+  "featured": true,
+  "scene": "s3",
+  "sceneB": "s5",
+  "mainImageUrl": "/project-images/rowhouse-community/entry-gate.webp",
+  "secondaryImageUrl": "/project-images/rowhouse-community/garden-01.webp",
+  "tertiaryImageUrl": "/project-images/rowhouse-community/garden-02.webp",
+  "quaternaryImageUrl": "/project-images/rowhouse-community/garden-03.webp",
+  "additionalImageUrls": [
+    "/project-images/rowhouse-community/play-area.webp"
+  ],
+  "imageAlt": "Contemporary rowhouse community entrance with clean geometric façades and landscaped edges",
+  "align": "right",
+  "span": "wide"
+}

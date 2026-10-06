@@ -12,21 +12,14 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "stress": "node scripts/stress.mjs",
-    "studio": "sanity dev",
-    "studio:build": "sanity build dist",
-    "studio:deploy": "sanity deploy"
+    "cms": "npx decap-server"
   },
   "dependencies": {
-    "@sanity/image-url": "^2.1.1",
-    "@sanity/vision": "^6.9.1",
     "gsap": "^3.13.0",
     "lenis": "^1.1.18",
     "next": "16.2.10",
-    "next-sanity": "^13.3.1",
     "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "sanity": "^6.9.1",
-    "styled-components": "^6.5.1"
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

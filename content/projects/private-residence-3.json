@@ -1,0 +1,29 @@
+{
+  "slug": "private-residence-3",
+  "order": 6,
+  "name": "Private Residence 3",
+  "location": "Pune, India",
+  "year": "2026",
+  "category": "Residential Interior Design",
+  "architect": "The Rouge Wall",
+  "typology": "Residential",
+  "discipline": "Interior",
+  "status": "Completed",
+  "size": "Private residence",
+  "desc": "A warm contemporary home where soft ivory surfaces, sculpted curves and dark timber are layered with brass accents and ambient light.",
+  "desc2": "Private Residence 3 balances understated luxury with a relaxed domestic character. Curved openings and furniture soften the open living and dining spaces, while fluted panelling, crafted timber, brass screens and illuminated niches add rhythm and depth. A restrained neutral palette allows artwork, textured finishes and sculptural lighting to give each space its own identity while maintaining a calm, cohesive whole.",
+  "featured": true,
+  "scene": "s4",
+  "sceneB": "s2",
+  "mainImageUrl": "/project-images/private-residence-3/living-room.jpg",
+  "secondaryImageUrl": "/project-images/private-residence-3/dining-room.jpg",
+  "tertiaryImageUrl": "/project-images/private-residence-3/tv-wall.jpg",
+  "quaternaryImageUrl": "/project-images/private-residence-3/study.jpg",
+  "additionalImageUrls": [
+    "/project-images/private-residence-3/partition-detail.jpg",
+    "/project-images/private-residence-3/tv-detail.jpg"
+  ],
+  "imageAlt": "Warm contemporary living room with curved furniture, ivory panelling, dark timber and brass accents",
+  "align": "left",
+  "span": "wide"
+}
