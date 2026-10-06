@@ -33,7 +33,7 @@ local_backend: true
 
 site_url: https://spacescape.co.in
 display_url: https://spacescape.co.in
-logo_url: /favicon.ico
+logo_url: https://spacescape.co.in/favicon.ico
 
 media_folder: public/project-images/uploads
 public_folder: /project-images/uploads
