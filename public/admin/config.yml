@@ -1,21 +1,32 @@
 # Decap CMS — content editor for spacescape.co.in
-# Open https://spacescape.co.in/admin/ (or http://localhost:3000/admin/ locally).
+# Open https://cms.spacescape.co.in (or http://localhost:3000/admin/ locally).
 # Every save is a Git commit to `main`, which triggers the GitHub Pages deploy.
 
 backend:
-  name: github
+  # Editors log in with email + password (or Google / Microsoft) through
+  # DecapBridge, which commits to GitHub on their behalf. Manage editors at
+  # https://decapbridge.com/dashboard/sites → "Manage collaborators".
+  name: git-gateway
   repo: spacescapevisualisation-dev/web
   branch: main
-  # GitHub login is handled by the small OAuth service in /api (deployed on
-  # Vercel). Replace with the URL Vercel gives that project if it differs.
-  base_url: https://cms.spacescape.co.in
-  auth_endpoint: api/auth
+  auth_type: pkce
+  base_url: https://auth.decapbridge.com
+  auth_endpoint: /sites/2e72e6f7-0f98-461a-b97b-35c8998469aa/pkce
+  auth_token_endpoint: /sites/2e72e6f7-0f98-461a-b97b-35c8998469aa/token
+  gateway_url: https://gateway.decapbridge.com
   commit_messages:
-    create: "CMS: add {{collection}} “{{slug}}”"
-    update: "CMS: update {{collection}} “{{slug}}”"
-    delete: "CMS: delete {{collection}} “{{slug}}”"
-    uploadMedia: "CMS: upload “{{path}}”"
-    deleteMedia: "CMS: delete “{{path}}”"
+    create: "CMS: add {{collection}} “{{slug}}” — {{author-name}}"
+    update: "CMS: update {{collection}} “{{slug}}” — {{author-name}}"
+    delete: "CMS: delete {{collection}} “{{slug}}” — {{author-name}}"
+    uploadMedia: "CMS: upload “{{path}}” — {{author-name}}"
+    deleteMedia: "CMS: delete “{{path}}” — {{author-name}}"
+
+# Show each editor's name and avatar from their DecapBridge login.
+auth:
+  email_claim: email
+  first_name_claim: first_name
+  last_name_claim: last_name
+  avatar_url_claim: avatar_url
 
 # `npx decap-server` + `npm run dev` lets you edit locally without logging in.
 local_backend: true

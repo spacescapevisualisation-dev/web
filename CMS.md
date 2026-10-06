@@ -2,7 +2,7 @@
 
 The site's content lives in this repository as plain JSON files, and
 [Decap CMS](https://decapcms.org) gives non-developers a form-based editor for
-them at **https://spacescape.co.in/admin/**.
+them at **https://cms.spacescape.co.in**.
 
 | What | File(s) | Editor section |
 | --- | --- | --- |
@@ -27,32 +27,28 @@ existing GitHub Pages workflow, so the live site updates in ~2 minutes.
 Keep images web-sized (≈2400px wide, WebP or JPG under ~1 MB) — large uploads
 slow the site and the repository.
 
-## One-time setup: GitHub login (≈10 minutes)
+## Logging in and managing editors
 
-GitHub Pages can't run the login handshake, so a tiny login service in `/api`
-runs on Vercel (free plan).
+Editors don't need GitHub accounts. Login runs through
+[DecapBridge](https://decapbridge.com) (free plan: up to 10 editors).
 
-1. **Create a GitHub OAuth App** — GitHub → Settings → Developer settings →
-   OAuth Apps → New OAuth App (create it under the
-   `spacescapevisualisation-dev` organisation if possible):
-   - Homepage URL: `https://spacescape.co.in`
-   - Authorization callback URL: `https://cms.spacescape.co.in/api/callback`
-   - Copy the **Client ID** and generate a **Client secret**.
-2. **Deploy the login service on Vercel** — import this repository. Vercel reads
-   `vercel.json` (no build; it only serves `/api/auth` and `/api/callback`).
-   Under Settings → Environment Variables add:
-   - `OAUTH_GITHUB_CLIENT_ID` = Client ID
-   - `OAUTH_GITHUB_CLIENT_SECRET` = Client secret
-   - `CMS_ALLOWED_ORIGINS` = `https://spacescape.co.in,https://www.spacescape.co.in,http://localhost:3000` (optional; this is the default)
+- **Log in:** open https://cms.spacescape.co.in → **Login** → email + password,
+  or Google / Microsoft.
+- **Add or remove an editor:** sign in at https://decapbridge.com → My Sites →
+  `spacescapevisualisation-dev/web` → **Manage collaborators** → invite by email.
+  They get an email to set a password.
+- Commits are made by DecapBridge with a fine-grained GitHub token
+  ("DecapBridge - spacescape CMS", Contents read/write on this repo only, no
+  expiry). If it is ever revoked, create a new one and paste it into the
+  DecapBridge site **Settings**.
 
-   Redeploy after adding them.
-3. **Domain** — add `cms.spacescape.co.in` in Vercel → Settings → Domains and
-   create the CNAME Vercel shows you in GoDaddy DNS (see `DEPLOYMENT.md`).
-   If you'd rather skip the custom domain, put the `*.vercel.app` URL in
-   `base_url` in `public/admin/config.yml` and in the OAuth App's callback URL.
-4. **Who can edit** — anyone with **write access** to the GitHub repository.
-   Add editors as collaborators (Repo → Settings → Collaborators). They log in
-   at `/admin/` with "Login with GitHub".
+### How it is hosted
+
+- The editor (`public/`, no build) is served by the Vercel project
+  `spacescape-cms` at `cms.spacescape.co.in` — see `vercel.json`. It
+  redeploys on every push to `main`.
+- DNS: GoDaddy CNAME `cms` → the value shown in Vercel → Settings → Domains.
+- The website itself stays on GitHub Pages (see `DEPLOYMENT.md`).
 
 ## Working locally (no login needed)
 

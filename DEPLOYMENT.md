@@ -18,17 +18,16 @@ In GoDaddy, open **My Products → spacescape.co.in → DNS** and configure:
 Remove conflicting parked-domain A records for `@` and any conflicting `www`
 record. Do not add a wildcard DNS record.
 
-## CMS login service — Vercel
+## CMS editor — Vercel
 
-The editor itself is served by GitHub Pages at `https://spacescape.co.in/admin/`.
-Vercel only hosts the GitHub login service in `/api` (see `CMS.md`).
+The Decap CMS editor is served by the Vercel project `spacescape-cms` at
+`https://cms.spacescape.co.in` (`vercel.json`: no build, serves `public/`).
+Login is handled by DecapBridge (see `CMS.md`).
 
-1. Import this GitHub repository into Vercel. `vercel.json` disables the build.
-2. Add the `OAUTH_GITHUB_*` environment variables listed in `CMS.md`.
-3. Add `cms.spacescape.co.in` under the Vercel project's **Settings → Domains**.
-4. Vercel will display a project-specific CNAME value. Copy that exact value.
-5. In GoDaddy DNS, add a CNAME with Name `cms` and the copied Vercel value.
-6. Wait for Vercel to verify DNS and provision HTTPS.
+1. The project is imported from this repository and redeploys on every push.
+2. `cms.spacescape.co.in` is added under the project's **Settings → Domains**.
+3. GoDaddy DNS has a CNAME with Name `cms` and the project-specific value
+   Vercel shows there.
 
 Do not guess the CMS CNAME: Vercel may issue a project-specific hostname.
 
